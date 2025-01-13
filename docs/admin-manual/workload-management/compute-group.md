@@ -1,6 +1,6 @@
 ---
 {
-"title": "Managing Compute Groups",
+"title": "Compute Group",
 "language": "en"
 }
 ---

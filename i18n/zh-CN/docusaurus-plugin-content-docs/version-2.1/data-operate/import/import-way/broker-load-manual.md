@@ -31,13 +31,13 @@ Broker Load 适合源数据存储在远程存储系统，比如对象存储或 H
 
 ## 使用限制
 
-支持的存储后端:
+支持的存储后端：
 
 - S3 协议
 - HDFS 协议
 - 其他协议（需要相应的 Broker 进程）
 
-支持的数据类型:
+支持的数据类型：
 
 - CSV
 - JSON
@@ -134,8 +134,8 @@ DISTRIBUTED BY HASH(user_id) BUCKETS 10;
     (
         "provider" = "S3",
         "AWS_ENDPOINT" = "s3.us-west-2.amazonaws.com",
-        "AWS_ACCESS_KEY" = "AKIAIOSFODNN7EXAMPLE",
-        "AWS_SECRET_KEY"="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "AWS_ACCESS_KEY" = "<your-ak>",
+        "AWS_SECRET_KEY"="<your-sk>",
         "AWS_REGION" = "us-west-2",
         "compress_type" = "PLAIN"
     )

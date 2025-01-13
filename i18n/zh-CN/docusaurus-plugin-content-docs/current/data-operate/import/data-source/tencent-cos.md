@@ -1,6 +1,6 @@
 ---
 {
-    "title": "Tencent COS",
+    "title": "腾讯云 COS",
     "language": "zh-CN"
 }
 ---
@@ -24,9 +24,9 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-Doris 提供两种方式从 Tencent COS 导入文件：
-- 使用 S3 Load 将 Tencent COS 文件导入到 Doris 中，这是一个异步的导入方式。
-- 使用 TVF 将 Tencent COS 文件导入到 Doris 中，这是一个同步的导入方式。
+Doris 提供两种方式从腾讯云 COS 导入文件：
+- 使用 S3 Load 将腾讯云 COS 文件导入到 Doris 中，这是一个异步的导入方式。
+- 使用 TVF 将腾讯云 COS 文件导入到 Doris 中，这是一个同步的导入方式。
 
 ## 使用 S3 Load 导入 
 
@@ -34,7 +34,7 @@ Doris 提供两种方式从 Tencent COS 导入文件：
 
 ### 第 1 步：准备数据
 
-创建 CSV 文件 s3load_example.csv 文件存储在 Tencent COS 上，其内容如下：
+创建 CSV 文件 s3load_example.csv 文件存储在腾讯云 COS 上，其内容如下：
 
 ```
 1,Emily,25
@@ -77,8 +77,8 @@ WITH S3
     "provider" = "COS",
     "s3.endpoint" = "cos.ap-beijing.myqcloud.com",
     "s3.region" = "ap-beijing",
-    "s3.access_key" = "AKIAIOSFODNN7EXAMPLE",
-    "s3.secret_key" = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    "s3.access_key" = "<your-ak>",
+    "s3.secret_key" = "<your-sk>"
 )
 PROPERTIES
 (
@@ -117,7 +117,7 @@ mysql> select * from test_s3load;
 
 ### 第 1 步：准备数据
 
-创建 CSV 文件 s3load_example.csv 文件存储在 Tencent COS 上，其内容如下：
+创建 CSV 文件 s3load_example.csv 文件存储在腾讯云 COS 上，其内容如下：
 
 ```
 1,Emily,25
@@ -155,8 +155,8 @@ SELECT * FROM S3
     "provider" = "COS",
     "s3.endpoint" = "cos.ap-beijing.myqcloud.com",
     "s3.region" = "ap-beijing",
-    "s3.access_key" = "AKIAIOSFODNN7EXAMPLE",
-    "s3.secret_key" = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "s3.access_key" = "<your-ak>",
+    "s3.secret_key" = "<your-sk>",
     "column_separator" = ",",
     "csv_schema" = "user_id:int;name:string;age:int"
 );

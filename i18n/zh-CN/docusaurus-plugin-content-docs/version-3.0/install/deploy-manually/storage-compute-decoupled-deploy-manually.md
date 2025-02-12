@@ -24,21 +24,21 @@ under the License.
 -->
 
 在完成前置检查及规划后，如环境检查、集群规划、操作系统检查后，可以开始部署集群。部署集群分为八步：
-1. 准备 FoundationDB 集群：可以使用已有的 FoundationDB 集群，或新建 FoundationDB 集群；
+1. *准备 FoundationDB 集群：*可以使用已有的 FoundationDB 集群，或新建 FoundationDB 集群；
    
-3. 部署 S3 或 HDFS 服务：可以使用已有的共享存储，或新建共享存储；
+3. *部署 S3 或 HDFS 服务：*可以使用已有的共享存储，或新建共享存储；
    
-4. 部署 Meta Service：为 Doris 集群部署 Meta Service 服务；
+4. *部署 Meta Service：*为 Doris 集群部署 Meta Service 服务；
    
-5. 部署数据回收进程：为 Doris 集群独立部署数据回收进程，可选操作；
+5. *部署数据回收进程：*为 Doris 集群独立部署数据回收进程，可选操作；
    
-6. 启动 FE Master 节点：启动第一个 FE 节点作为 Master FE 节点；
+6. *启动 FE Master 节点：*启动第一个 FE 节点作为 Master FE 节点；
    
-7. 创建 FE Master 集群：添加 FE Follower/Observer 节点组成 FE 集群；
+7. *创建 FE Master 集群：*添加 FE Follower/Observer 节点组成 FE 集群；
    
-8. 添加 BE 节点：向集群中添加并注册 BE 节点；
+8. *添加 BE 节点：*向集群中添加并注册 BE 节点；
    
-9. 添加 Storage Vault：使用共享存储创建一个或多个 Storage Vault。
+9. *添加 Storage Vault：*使用共享存储创建一个或多个 Storage Vault。
 
 在开始部署操作前，可以[下载](https://doris.apache.org/download)相应的 Doris 版本。
 

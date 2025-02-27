@@ -189,190 +189,173 @@ Doris Kafka Connector 是将 Kafka 数据流导入 Doris 数据库的工具。�
 1. 在 `$KAFKA_HOME` 下创建 plugins 目录，将下载好的 doris-kafka-connector jar 包放入其中。
 2. 配置 `config/connect-distributed.properties`：
 
-```Bash
-# 修改 broker 地址
-bootstrap.servers=127.0.0.1:9092
+    ```Bash
+    # 修改 broker 地址
+    bootstrap.servers=127.0.0.1:9092
 
-# 修改 group.id，同一集群的需要一致
-group.id=connect-cluster
+    # 修改 group.id，同一集群的需要一致
+    group.id=connect-cluster
 
-# 修改为创建的 plugins 目录
-# 注意：此处请填写 Kafka 的直接路径。例如：plugin.path=/opt/kafka/plugins
-plugin.path=$KAFKA_HOME/plugins
+    # 修改为创建的 plugins 目录
+    # 注意：此处请填写 Kafka 的直接路径。例如：plugin.path=/opt/kafka/plugins
+    plugin.path=$KAFKA_HOME/plugins
 
-# 建议将 Kafka 的 max.poll.interval.ms 时间调大到 30 分钟以上，默认 5 分钟
-# 避免 Stream Load 导入数据消费超时，消费者被踢出消费群组
-max.poll.interval.ms=1800000
-consumer.max.poll.interval.ms=1800000
-```
+    # 建议将 Kafka 的 max.poll.interval.ms 时间调大到 30 分钟以上，默认 5 分钟
+    # 避免 Stream Load 导入数据消费超时，消费者被踢出消费群组
+    max.poll.interval.ms=1800000
+    consumer.max.poll.interval.ms=1800000
+    ```
 
 3. 启动：
 
-```Bash
-$KAFKA_HOME/bin/connect-distributed.sh -daemon $KAFKA_HOME/config/connect-distributed.properties
-```
+    ```Bash
+    $KAFKA_HOME/bin/connect-distributed.sh -daemon $KAFKA_HOME/config/connect-distributed.properties
+    ```
 
 4. 消费 Kafka 数据：
 
-```Bash
-curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
-  "name":"test-doris-sink-cluster",
-  "config":{
-    "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
-    "topics":"topic_test",
-    "doris.topic2table.map": "topic_test:test_kafka_tbl",
-    "buffer.count.records":"10000",
-    "buffer.flush.time":"120",
-    "buffer.size.bytes":"5000000",
-    "doris.urls":"10.10.10.1",
-    "doris.user":"root",
-    "doris.password":"",
-    "doris.http.port":"8030",
-    "doris.query.port":"9030",
-    "doris.database":"test_db",
-    "key.converter":"org.apache.kafka.connect.storage.StringConverter",
-    "value.converter":"org.apache.kafka.connect.storage.StringConverter"
-  }
-}'
-```
-
-**操作 Kafka Connect**
-
-```Bash
-# 查看 connector 状态
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/status -X GET
-# 删除当前 connector
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster -X DELETE
-# 暂停当前 connector
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/pause -X PUT
-# 重启当前 connector
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/resume -X PUT
-# 重启 connector 内的 tasks
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/tasks/0/restart -X POST
-```
-
-关于 Distributed 模式的介绍请参见 [Distributed Workers](https://docs.confluent.io/platform/current/connect/index.html#distributed-workers)。
+    ```Bash
+    curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
+      "name":"test-doris-sink-cluster",
+      "config":{
+        "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
+        "topics":"topic_test",
+        "doris.topic2table.map": "topic_test:test_kafka_tbl",
+        "buffer.count.records":"10000",
+        "buffer.flush.time":"120",
+        "buffer.size.bytes":"5000000",
+        "doris.urls":"10.10.10.1",
+        "doris.user":"root",
+        "doris.password":"",
+        "doris.http.port":"8030",
+        "doris.query.port":"9030",
+        "doris.database":"test_db",
+        "key.converter":"org.apache.kafka.connect.storage.StringConverter",
+        "value.converter":"org.apache.kafka.connect.storage.StringConverter"
+      }
+    }'
+    ```
 
 ### 消费普通数据
 
 1. 导入数据样本：
 
-在 Kafka 中，样本数据如下：
+    在 Kafka 中，样本数据如下：
 
-```Bash
-kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-data-topic --from-beginning
-{"user_id":1,"name":"Emily","age":25}
-{"user_id":2,"name":"Benjamin","age":35}
-{"user_id":3,"name":"Olivia","age":28}
-{"user_id":4,"name":"Alexander","age":60}
-{"user_id":5,"name":"Ava","age":17}
-{"user_id":6,"name":"William","age":69}
-{"user_id":7,"name":"Sophia","age":32}
-{"user_id":8,"name":"James","age":64}
-{"user_id":9,"name":"Emma","age":37}
-{"user_id":10,"name":"Liam","age":64}
-```
+    ```Bash
+    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-data-topic --from-beginning
+    {"user_id":1,"name":"Emily","age":25}
+    {"user_id":2,"name":"Benjamin","age":35}
+    {"user_id":3,"name":"Olivia","age":28}
+    {"user_id":4,"name":"Alexander","age":60}
+    {"user_id":5,"name":"Ava","age":17}
+    {"user_id":6,"name":"William","age":69}
+    {"user_id":7,"name":"Sophia","age":32}
+    {"user_id":8,"name":"James","age":64}
+    {"user_id":9,"name":"Emma","age":37}
+    {"user_id":10,"name":"Liam","age":64}
+    ```
 
 2. 创建需要导入的表：
 
-在 Doris 中创建被导入的表，具体语法如下：
+    在 Doris 中创建被导入的表，具体语法如下：
 
-```SQL
-CREATE TABLE test_db.test_kafka_connector_tbl(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-DUPLICATE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 12;
-```
+    ```SQL
+    CREATE TABLE test_db.test_kafka_connector_tbl(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    DUPLICATE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 12;
+    ```
 
 3. 创建导入任务：
 
-在部署 Kafka Connect 的机器上，通过 curl 命令提交如下导入任务：
+    在部署 Kafka Connect 的机器上，通过 curl 命令提交如下导入任务：
 
-```Bash
-curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
-  "name":"test-doris-sink-cluster",
-  "config":{
-    "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
-    "tasks.max":"10",
-    "topics":"test-data-topic",
-    "doris.topic2table.map": "test-data-topic:test_kafka_connector_tbl",
-    "buffer.count.records":"10000",
-    "buffer.flush.time":"120",
-    "buffer.size.bytes":"5000000",
-    "doris.urls":"10.10.10.1",
-    "doris.user":"root",
-    "doris.password":"",
-    "doris.http.port":"8030",
-    "doris.query.port":"9030",
-    "doris.database":"test_db",
-    "key.converter":"org.apache.kafka.connect.storage.StringConverter",
-    "value.converter":"org.apache.kafka.connect.storage.StringConverter"
-  }
-}'
-```
+    ```Bash
+    curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
+      "name":"test-doris-sink-cluster",
+      "config":{
+        "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
+        "tasks.max":"10",
+        "topics":"test-data-topic",
+        "doris.topic2table.map": "test-data-topic:test_kafka_connector_tbl",
+        "buffer.count.records":"10000",
+        "buffer.flush.time":"120",
+        "buffer.size.bytes":"5000000",
+        "doris.urls":"10.10.10.1",
+        "doris.user":"root",
+        "doris.password":"",
+        "doris.http.port":"8030",
+        "doris.query.port":"9030",
+        "doris.database":"test_db",
+        "key.converter":"org.apache.kafka.connect.storage.StringConverter",
+        "value.converter":"org.apache.kafka.connect.storage.StringConverter"
+      }
+    }'
+    ```
 
 ### 消费 Debezium 组件采集的数据
 
 1. MySQL 数据库中有如下表：
 
-```SQL
-CREATE TABLE test.test_user (
-  user_id int NOT NULL ,
-  name varchar(20),
-  age int,
-  PRIMARY KEY (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ```SQL
+    CREATE TABLE test.test_user (
+      user_id int NOT NULL ,
+      name varchar(20),
+      age int,
+      PRIMARY KEY (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-insert into test.test_user values(1,'zhangsan',20);
-insert into test.test_user values(2,'lisi',21);
-insert into test.test_user values(3,'wangwu',22);
-```
+    insert into test.test_user values(1,'zhangsan',20);
+    insert into test.test_user values(2,'lisi',21);
+    insert into test.test_user values(3,'wangwu',22);
+    ```
 
 2. 在 Doris 创建被导入的表：
 
-```SQL
-CREATE TABLE test_db.test_user(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-UNIQUE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 12;
-```
+    ```SQL
+    CREATE TABLE test_db.test_user(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    UNIQUE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 12;
+    ```
 
 3. 部署 Debezium connector for MySQL 组件，参考：[Debezium connector for MySQL](https://debezium.io/documentation/reference/stable/connectors/mysql.html)。
 
 4. 创建 doris-kafka-connector 导入任务：
 
-假设通过 Debezium 采集到的 MySQL 表数据在 `mysql_debezium.test.test_user` Topic 中：
+    假设通过 Debezium 采集到的 MySQL 表数据在 `mysql_debezium.test.test_user` Topic 中：
 
-```Bash
-curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
-  "name":"test-debezium-doris-sink",
-  "config":{
-    "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
-    "tasks.max":"10",
-    "topics":"mysql_debezium.test.test_user",
-    "doris.topic2table.map": "mysql_debezium.test.test_user:test_user",
-    "buffer.count.records":"10000",
-    "buffer.flush.time":"120",
-    "buffer.size.bytes":"5000000",
-    "doris.urls":"10.10.10.1",
-    "doris.user":"root",
-    "doris.password":"",
-    "doris.http.port":"8030",
-    "doris.query.port":"9030",
-    "doris.database":"test_db",
-    "converter.mode":"debezium_ingestion",
-    "enable.delete":"true",
-    "key.converter":"org.apache.kafka.connect.json.JsonConverter",
-    "value.converter":"org.apache.kafka.connect.json.JsonConverter"
-  }
-}'
-```
+    ```Bash
+    curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
+      "name":"test-debezium-doris-sink",
+      "config":{
+        "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
+        "tasks.max":"10",
+        "topics":"mysql_debezium.test.test_user",
+        "doris.topic2table.map": "mysql_debezium.test.test_user:test_user",
+        "buffer.count.records":"10000",
+        "buffer.flush.time":"120",
+        "buffer.size.bytes":"5000000",
+        "doris.urls":"10.10.10.1",
+        "doris.user":"root",
+        "doris.password":"",
+        "doris.http.port":"8030",
+        "doris.query.port":"9030",
+        "doris.database":"test_db",
+        "converter.mode":"debezium_ingestion",
+        "enable.delete":"true",
+        "key.converter":"org.apache.kafka.connect.json.JsonConverter",
+        "value.converter":"org.apache.kafka.connect.json.JsonConverter"
+      }
+    }'
+    ```
 
 ### 消费 AVRO 序列化格式数据
 

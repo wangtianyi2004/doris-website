@@ -202,7 +202,7 @@ Doris Kafka Connector 是将 Kafka 数据流导入 Doris 数据库的工具。�
     consumer.max.poll.interval.ms=1800000
     ```
 
-3. 启动：
+3. 启动 Kafka Connect：
 
     ```Bash
     $KAFKA_HOME/bin/connect-distributed.sh -daemon $KAFKA_HOME/config/connect-distributed.properties

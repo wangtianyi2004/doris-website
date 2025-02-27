@@ -45,7 +45,7 @@ Doris 提供以下方式从 Kafka 导入数据：
 - 默认支持 Kafka 0.10.0.0 及以上版本。若需使用旧版本（如 0.9.0，0.8.2，0.8.1，0.8.0），需修改 BE 配置，将 `kafka_broker_version_fallback` 设置为兼容的旧版本，或在创建 Routine Load 时设置 `property.broker.version.fallback`。使用旧版本可能导致部分新特性无法使用，如根据时间设置 Kafka 分区的 offset。
 
 
-#### Routine Load 导入单表
+### Routine Load 导入单表
 
 **第 1 步：准备数据**
 
@@ -173,7 +173,7 @@ mysql> select * from test_multi_table_load2;
 1 rows in set (0.01 sec)
 ```
 
-### 配置安全认证
+### Routine Load 配置安全认证
 
 有关带有认证的 Kafka 配置方法，请参见 [Kafka 安全认证](../import-way/routine-load-manual.md#kafka-安全认证)。
 

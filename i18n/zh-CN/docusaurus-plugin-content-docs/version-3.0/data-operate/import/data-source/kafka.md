@@ -28,11 +28,11 @@ Doris 提供以下方式从 Kafka 导入数据：
 
 - **使用 Routine Load 消费 Kafka 数据**
 
-Doris 通过 Routine Load 持续消费 Kafka Topic 中的数据。提交 Routine Load 作业后，Doris 会实时生成导入任务，消费 Kafka 集群中指定 Topic 的消息。Routine Load 支持 CSV 和 JSON 格式，具备 Exactly-Once 语义，确保数据不丢失且不重复。更多信息请参考 [Routine Load](../import-way/routine-load-manual.md)。
+  Doris 通过 Routine Load 持续消费 Kafka Topic 中的数据。提交 Routine Load 作业后，Doris 会实时生成导入任务，消费 Kafka 集群中指定 Topic 的消息。Routine Load 支持 CSV 和 JSON 格式，具备 Exactly-Once 语义，确保数据不丢失且不重复。更多信息请参考 [Routine Load](../import-way/routine-load-manual.md)。
 
 - **Doris Kafka Connector 消费 Kafka 数据**
 
-Doris Kafka Connector 是将 Kafka 数据流导入 Doris 数据库的工具。用户可通过 Kafka Connect 插件轻松导入多种序列化格式（如 JSON、Avro、Protobuf），并支持解析 Debezium 组件的数据格式。更多信息请参考 [Doris Kafka Connector](../../../ecosystem/doris-kafka-connector.md)。
+  Doris Kafka Connector 是将 Kafka 数据流导入 Doris 数据库的工具。用户可通过 Kafka Connect 插件轻松导入多种序列化格式（如 JSON、Avro、Protobuf），并支持解析 Debezium 组件的数据格式。更多信息请参考 [Doris Kafka Connector](../../../ecosystem/doris-kafka-connector.md)。
 
 在大多数情况下，可以直接选择 Routine Load 进行数据导入，无需集成外部组件即可消费 Kafka 数据。当需要加载 Avro、Protobuf 格式的数据，或通过 Debezium 采集的上游数据库数据时，可以使用 Doris Kafka Connector。
 
@@ -40,14 +40,12 @@ Doris Kafka Connector 是将 Kafka 数据流导入 Doris 数据库的工具。�
 
 ### 使用限制
 
-1. 支持的消息格式为 CSV 和 JSON。CSV 每个消息为一行，且行尾不包含换行符；
-2. 默认支持 Kafka 0.10.0.0 及以上版本。若需使用旧版本（如 0.9.0，0.8.2，0.8.1，0.8.0），需修改 BE 配置，将 `kafka_broker_version_fallback` 设置为兼容的旧版本，或在创建 Routine Load 时设置 `property.broker.version.fallback`。使用旧版本可能导致部分新特性无法使用，如根据时间设置 Kafka 分区的 offset。
+- 支持的消息格式为 CSV 和 JSON。CSV 每个消息为一行，且行尾不包含换行符；
 
-### 操作示例
+- 默认支持 Kafka 0.10.0.0 及以上版本。若需使用旧版本（如 0.9.0，0.8.2，0.8.1，0.8.0），需修改 BE 配置，将 `kafka_broker_version_fallback` 设置为兼容的旧版本，或在创建 Routine Load 时设置 `property.broker.version.fallback`。使用旧版本可能导致部分新特性无法使用，如根据时间设置 Kafka 分区的 offset。
 
-在 Doris 中通过 CREATE ROUTINE LOAD 命令创建常驻 Routine Load 导入任务，分为单表导入和多表导入。详细语法请参考 [CREATE ROUTINE LOAD](../../../sql-manual/sql-statements/data-modification/load-and-export/CREATE-ROUTINE-LOAD)。
 
-#### 单表导入
+#### Routine Load 导入单表
 
 **第 1 步：准备数据**
 
@@ -99,7 +97,7 @@ mysql> select * from test_routineload_tbl;
 1 rows in set (0.01 sec)
 ```
 
-#### 多表导入
+### Routine Load 导入多表
 
 对于需要同时导入多张表的场景，Kafka 中的数据必须包含表名信息，格式为：`table_name|data`。例如，导入 CSV 数据时，格式应为：`table_name|val1,val2,val3`。请注意，表名必须与 Doris 中的表名完全一致，否则导入将失败，并且不支持后面介绍的 column_mapping 配置。
 
@@ -175,9 +173,10 @@ mysql> select * from test_multi_table_load2;
 1 rows in set (0.01 sec)
 ```
 
-#### 配置安全认证
+### 配置安全认证
 
 有关带有认证的 Kafka 配置方法，请参见 [Kafka 安全认证](../import-way/routine-load-manual.md#kafka-安全认证)。
+
 
 ## 使用 Doris Kafka Connector 消费 Kafka 数据
 

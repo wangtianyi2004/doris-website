@@ -264,31 +264,16 @@ curl --location-trusted -u <doris_user>:<doris_password> \
 
 Stream Load 操作支持 HTTP 分块导入（HTTP chunked）与 HTTP 非分块导入方式。对于非分块导入方式，必须要有 Content-Length 来标示上传内容的长度，这样能保证数据的完整性。
 
-### 导入配置参数
+### 导入参数
 
-**FE 配置**
+**配置参数**
 
-1. stream_load_default_timeout_second
+| 参数名称                          | 组件 | 默认值       | 动态配置 | FE Master 独有 | 参数描述                                                                                   |
+|-----------------------------------|------|--------------|----------|----------------|--------------------------------------------------------------------------------------------|
+| `stream_load_default_timeout_second` | FE   | 259200 (s)   | 是       | 是             | Stream Load 默认超时时间（秒）。任务未在设定时间内完成将被取消，可在请求中单独设置超时，或调整此参数设置全局默认值。 |
+| `streaming_load_max_mb`           | BE   | 10240 (MB)   | 是       | 否             | Stream Load 最大导入大小（MB）。若原始文件超过此值，需调整此参数。                         |
 
-- 默认值：259200（s）
-
-- 动态配置：是
-
-- FE Master 独有配置：是
-
-参数描述：Stream Load 默认的超时时间。导入任务的超时时间（以秒为单位），导入任务在设定的 timeout 时间内未完成则会被系统取消，变成 CANCELLED。如果导入的源文件无法在规定时间内完成导入，用户可以在 Stream Load 请求中设置单独的超时时间。或者调整 FE 的参数`stream_load_default_timeout_second` 来设置全局的默认超时时间。
-
-**BE 配置**
-
-1. streaming_load_max_mb
-
-- 默认值：10240（MB）
-
-- 动态配置：是
-
-- 参数描述：Stream load 的最大导入大小。如果用户的原始文件超过这个值，则需要调整 BE 的参数 `streaming_load_max_mb`。
-
-2. Header 参数
+**Header 参数**
 
 可以通过 HTTP 的 Header 部分来传入导入参数。具体参数介绍如下：
 
@@ -359,11 +344,7 @@ Stream Load 是一种同步的导入方式，导入结果会通过创建导入�
 | ---------------------- | ------------------------------------------------------------ |
 | TxnId                  | 导入事务的 ID                                                |
 | Label                  | 导入作业的 label，通过 -H "label:<label_id>" 指定            |
-| Status                 | 导入的最终状态                                              |
-|                        | - Success：表示导入成功                                     |
-|                        | - Publish Timeout：该状态也表示导入已经完成，但数据可能会延迟可见，无需重试 |
-|                        | - Label Already Exists：Label 重复，需要更换 label         |
-|                        | - Fail：导入失败                                            |
+| Status                 | 导入的最终状态：<br> - Success：表示导入成功 <br> - Publish Timeout：该状态也表示导入已经完成，但数据可能会延迟可见，无需重试 <br> - Label Already Exists：Label 重复，需要更换 label <br> - Fail：导入失败 |
 | ExistingJobStatus      | 已存在的 Label 对应的导入作业的状态。这个字段只有在当 Status 为 "Label Already Exists" 时才会显示。用户可以通过这个状态，知晓已存在 Label 对应的导入作业的状态。"RUNNING" 表示作业还在执行，"FINISHED" 表示作业成功。 |
 | Message                | 导入错误信息                                                 |
 | NumberTotalRows        | 导入总处理的行数                                             |
@@ -378,6 +359,7 @@ Stream Load 是一种同步的导入方式，导入结果会通过创建导入�
 | WriteDataTimeMs        | 执行写入数据操作所花费的时间，单位毫秒                       |
 | CommitAndPublishTimeMs | 向 FE 请求提交并且发布事务所花费的时间，单位毫秒             |
 | ErrorURL               | 如果有数据质量问题，通过访问这个 URL 查看具体错误行          |
+
 
 通过 ErrorURL 可以查看因为数据质量不佳导致的导入失败数据。使用命令 `curl "<ErrorURL>"` 命令直接查看错误数据的信息。
 

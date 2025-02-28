@@ -411,9 +411,8 @@ FROM KAFKA [data_source_properties]
     通过配置 data_source_properties 中的 kafka property 参数，可以配置安全访问选项。目前 Doris 支持多种 Kafka 安全协议，如 plaintext（默认）、SSL、PLAIN、Kerberos 等。
 
 
-### 导入参数说明
+### 导入配置说明
 
-**FE 与 BE 配置参数**
 
 | 参数名称                          | 默认值 | 动态配置 | 组件 | 参数描述                                                                                     |
 |-----------------------------------|--------|----------|-------|----------------------------------------------------------------------------------------------|
@@ -814,26 +813,26 @@ ReasonOfStateChanged:
 
 1. 导入数据样例
 
-```sql
-3,Alexander,22
-5,William,26
-```
+    ```sql
+    3,Alexander,22
+    5,William,26
+    ```
 
-导入前表中数据如下
+    导入前表中数据如下
 
-```sql
-mysql> SELECT * FROM routine_test07;
-+------+----------------+------+
-| id   | name           | age  |
-+------+----------------+------+
-|    1 | Benjamin       |   18 |
-|    2 | Emily          |   20 |
-|    3 | Alexander      |   22 |
-|    4 | Sophia         |   24 |
-|    5 | William        |   26 |
-|    6 | Charlotte      |   28 |
-+------+----------------+------+
-```
+    ```sql
+    mysql> SELECT * FROM routine_test07;
+    +------+----------------+------+
+    | id   | name           | age  |
+    +------+----------------+------+
+    |    1 | Benjamin       |   18 |
+    |    2 | Emily          |   20 |
+    |    3 | Alexander      |   22 |
+    |    4 | Sophia         |   24 |
+    |    5 | William        |   26 |
+    |    6 | Charlotte      |   28 |
+    +------+----------------+------+
+    ```
 
 2. 建表结构
 
@@ -879,31 +878,31 @@ mysql> SELECT * FROM routine_test07;
 
 1. 导入数据样例
 
-```sql
-1,xiaoxiaoli,28
-2,xiaoxiaowang,30
-3,xiaoxiaoliu,32
-4,dadali,34
-5,dadawang,36
-6,dadaliu,38
-```
+    ```sql
+    1,xiaoxiaoli,28
+    2,xiaoxiaowang,30
+    3,xiaoxiaoliu,32
+    4,dadali,34
+    5,dadawang,36
+    6,dadaliu,38
+    ```
 
-导入前表中数据如下：
+    导入前表中数据如下：
 
-```sql
-mysql> SELECT * FROM routine_test08;
-+------+----------------+------+
-| id   | name           | age  |
-+------+----------------+------+
-|    1 | Benjamin       |   18 |
-|    2 | Emily          |   20 |
-|    3 | Alexander      |   22 |
-|    4 | Sophia         |   24 |
-|    5 | William        |   26 |
-|    6 | Charlotte      |   28 |
-+------+----------------+------+
-6 rows in set (0.01 sec)
-```
+    ```sql
+    mysql> SELECT * FROM routine_test08;
+    +------+----------------+------+
+    | id   | name           | age  |
+    +------+----------------+------+
+    |    1 | Benjamin       |   18 |
+    |    2 | Emily          |   20 |
+    |    3 | Alexander      |   22 |
+    |    4 | Sophia         |   24 |
+    |    5 | William        |   26 |
+    |    6 | Charlotte      |   28 |
+    +------+----------------+------+
+    6 rows in set (0.01 sec)
+    ```
 
 2. 建表结构
 
@@ -934,34 +933,34 @@ mysql> SELECT * FROM routine_test08;
 
 4. 导入结果
 
-```sql
-mysql> SELECT * FROM routine_test08;
-+------+-------------+------+
-| id   | name        | age  |
-+------+-------------+------+
-|    1 | xiaoxiaoli  |   28 |
-|    3 | xiaoxiaoliu |   32 |
-|    4 | dadali      |   34 |
-|    5 | dadawang    |   36 |
-|    6 | dadaliu     |   38 |
-+------+-------------+------+
-5 rows in set (0.00 sec)
-```
+    ```sql
+    mysql> SELECT * FROM routine_test08;
+    +------+-------------+------+
+    | id   | name        | age  |
+    +------+-------------+------+
+    |    1 | xiaoxiaoli  |   28 |
+    |    3 | xiaoxiaoliu |   32 |
+    |    4 | dadali      |   34 |
+    |    5 | dadawang    |   36 |
+    |    6 | dadaliu     |   38 |
+    +------+-------------+------+
+    5 rows in set (0.00 sec)
+    ```
 
 **指定导入需要 merge 的 sequence 列**
 
 1. 导入数据样例
 
-```sql
-1,xiaoxiaoli,28
-2,xiaoxiaowang,30
-3,xiaoxiaoliu,32
-4,dadali,34
-5,dadawang,36
-6,dadaliu,38
-```
+    ```sql
+    1,xiaoxiaoli,28
+    2,xiaoxiaowang,30
+    3,xiaoxiaoliu,32
+    4,dadali,34
+    5,dadawang,36
+    6,dadaliu,38
+    ```
 
-导入前表中数据如下：
+    导入前表中数据如下：
 
     ```sql
     mysql> SELECT * FROM routine_test09;
@@ -1503,11 +1502,11 @@ mysql> SELECT * FROM routine_test08;
 4. 导入结果
 
     ```sql
-    mysql> select id, BITMAP_UNION_COUNT(pv) over(order by id) uv from(
-        ->    select id, BITMAP_UNION(device_id) as pv
-        ->    from routine_test18 
-        -> group by id 
-        -> ) final;
+    select id, BITMAP_UNION_COUNT(pv) over(order by id) uv from(
+        select id, BITMAP_UNION(device_id) as pv
+        from routine_test18 
+        group by id 
+    ) final;
     +------+------+
     | id   | uv   |
     +------+------+
@@ -1589,99 +1588,99 @@ mysql> SELECT * FROM routine_test08;
     1 row in set (0.01 sec)
     ```
 
-#### Kafka 安全认证
+##### Kafka 安全认证
 
 **导入 SSL 认证的 Kafka 数据**
 
-导入命令样例：
+1. 导入命令样例：
 
-```SQL
-CREATE ROUTINE LOAD demo.kafka_job20 ON routine_test20
-        PROPERTIES
-        (
-            "format" = "json"
-        )
-        FROM KAFKA
-        (
-            "kafka_broker_list" = "192.168.100.129:9092",
-            "kafka_topic" = "routineLoad21",
-            "property.security.protocol" = "ssl",
-            "property.ssl.ca.location" = "FILE:ca.pem",
-            "property.ssl.certificate.location" = "FILE:client.pem",
-            "property.ssl.key.location" = "FILE:client.key",
-            "property.ssl.key.password" = "ssl_passwd"
-        );  
-```
+    ```SQL
+    CREATE ROUTINE LOAD demo.kafka_job20 ON routine_test20
+            PROPERTIES
+            (
+                "format" = "json"
+            )
+            FROM KAFKA
+            (
+                "kafka_broker_list" = "192.168.100.129:9092",
+                "kafka_topic" = "routineLoad21",
+                "property.security.protocol" = "ssl",
+                "property.ssl.ca.location" = "FILE:ca.pem",
+                "property.ssl.certificate.location" = "FILE:client.pem",
+                "property.ssl.key.location" = "FILE:client.key",
+                "property.ssl.key.password" = "ssl_passwd"
+            );  
+    ```
 
-参数说明：
+2. 参数说明：
 
-| 参数                              | 介绍                                                         |
-| --------------------------------- | ------------------------------------------------------------ |
-| property.security.protocol        | 使用的安全协议，如上述的例子使用的是 SSL                     |
-| property.ssl.ca.location          | CA（Certificate Authority）证书的位置                        |
-| property.ssl.certificate.location | （如果 Kafka server 端开启了 client 认证才需要配置）Client 的 public key 的位置 |
-| property.ssl.key.location         | （如果 Kafka server 端开启了 client 认证才需要配置）Client 的 private key 的位置 |
-| property.ssl.key.password         | （如果 Kafka server 端开启了 client 认证才需要配置）Client 的 private key 的密码 |
+    | 参数                              | 介绍                                                         |
+    | --------------------------------- | ------------------------------------------------------------ |
+    | property.security.protocol        | 使用的安全协议，如上述的例子使用的是 SSL                     |
+    | property.ssl.ca.location          | CA（Certificate Authority）证书的位置                        |
+    | property.ssl.certificate.location | （如果 Kafka server 端开启了 client 认证才需要配置）Client 的 public key 的位置 |
+    | property.ssl.key.location         | （如果 Kafka server 端开启了 client 认证才需要配置）Client 的 private key 的位置 |
+    | property.ssl.key.password         | （如果 Kafka server 端开启了 client 认证才需要配置）Client 的 private key 的密码 |
 
 **导入 Kerberos 认证的 Kafka 数据**
 
-导入命令样例：
+1. 导入命令样例：
 
-```SQL
-CREATE ROUTINE LOAD demo.kafka_job21 ON routine_test21
-        PROPERTIES
-        (
-            "format" = "json"
-        )
-        FROM KAFKA
-        (
-            "kafka_broker_list" = "192.168.100.129:9092",
-            "kafka_topic" = "routineLoad21",
-            "property.security.protocol" = "SASL_PLAINTEXT",
-            "property.sasl.kerberos.service.name" = "kafka",
-            "property.sasl.kerberos.keytab"="/opt/third/kafka/kerberos/kafka_client.keytab",
-            "property.sasl.kerberos.principal" = "clients/stream.dt.local@EXAMPLE.COM"
-        );  
-```
+    ```SQL
+    CREATE ROUTINE LOAD demo.kafka_job21 ON routine_test21
+            PROPERTIES
+            (
+                "format" = "json"
+            )
+            FROM KAFKA
+            (
+                "kafka_broker_list" = "192.168.100.129:9092",
+                "kafka_topic" = "routineLoad21",
+                "property.security.protocol" = "SASL_PLAINTEXT",
+                "property.sasl.kerberos.service.name" = "kafka",
+                "property.sasl.kerberos.keytab"="/opt/third/kafka/kerberos/kafka_client.keytab",
+                "property.sasl.kerberos.principal" = "clients/stream.dt.local@EXAMPLE.COM"
+            );  
+    ```
 
-参数说明：
+2. 参数说明：
 
-| 参数                                | 介绍                                                |
-| ----------------------------------- | --------------------------------------------------- |
-| property.security.protocol          | 使用的安全协议，如上述的例子使用的是 SASL_PLAINTEXT |
-| property.sasl.kerberos.service.name | 指定 broker service name，默认是 Kafka              |
-| property.sasl.kerberos.keytab       | keytab 文件的位置                                   |
-| property.sasl.kerberos.principal    | 指定 kerberos principal                             |
+    | 参数                                | 介绍                                                |
+    | ----------------------------------- | --------------------------------------------------- |
+    | property.security.protocol          | 使用的安全协议，如上述的例子使用的是 SASL_PLAINTEXT |
+    | property.sasl.kerberos.service.name | 指定 broker service name，默认是 Kafka              |
+    | property.sasl.kerberos.keytab       | keytab 文件的位置                                   |
+    | property.sasl.kerberos.principal    | 指定 kerberos principal                             |
 
-导入 PLAIN 认证的 Kafka 集群
+**导入 PLAIN 认证的 Kafka 集群**
 
 1. 导入命令样例：
 
-```SQL
-CREATE ROUTINE LOAD demo.kafka_job22 ON routine_test22
-        PROPERTIES
-        (
-            "format" = "json"
-        )
-        FROM KAFKA
-        (
-            "kafka_broker_list" = "192.168.100.129:9092",
-            "kafka_topic" = "routineLoad22",
-            "property.security.protocol"="SASL_PLAINTEXT",
-            "property.sasl.mechanism"="PLAIN",
-            "property.sasl.username"="admin",
-            "property.sasl.password"="admin"
-        );  
-```
+    ```SQL
+    CREATE ROUTINE LOAD demo.kafka_job22 ON routine_test22
+            PROPERTIES
+            (
+                "format" = "json"
+            )
+            FROM KAFKA
+            (
+                "kafka_broker_list" = "192.168.100.129:9092",
+                "kafka_topic" = "routineLoad22",
+                "property.security.protocol"="SASL_PLAINTEXT",
+                "property.sasl.mechanism"="PLAIN",
+                "property.sasl.username"="admin",
+                "property.sasl.password"="admin"
+            );  
+    ```
 
-参数说明：
+2. 参数说明：
 
-| 参数                       | 介绍                                                |
-| -------------------------- | --------------------------------------------------- |
-| property.security.protocol | 使用的安全协议，如上述的例子使用的是 SASL_PLAINTEXT |
-| property.sasl.mechanism    | 指定 SASL 认证机制为 PLAIN                          |
-| property.sasl.username     | SASL 的用户名                                       |
-| property.sasl.password     | SASL 的密码                                         |
+    | 参数                       | 介绍                                                |
+    | -------------------------- | --------------------------------------------------- |
+    | property.security.protocol | 使用的安全协议，如上述的例子使用的是 SASL_PLAINTEXT |
+    | property.sasl.mechanism    | 指定 SASL 认证机制为 PLAIN                          |
+    | property.sasl.username     | SASL 的用户名                                       |
+    | property.sasl.password     | SASL 的密码                                         |
 
 #### 一流多表导入
 

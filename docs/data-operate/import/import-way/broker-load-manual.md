@@ -85,85 +85,85 @@ For the specific syntax for usage, please refer to [BROKER LOAD](../../../sql-ma
 
 1. Grant privileges on the table
 
-Broker Load requires `INSERT` privileges on the target table. If there are no `INSERT` privileges, it can be granted to the user through the [GRANT](../../../sql-manual/sql-statements/account-management/GRANT-TO) command.
+    Broker Load requires `INSERT` privileges on the target table. If there are no `INSERT` privileges, it can be granted to the user through the [GRANT](../../../sql-manual/sql-statements/account-management/GRANT-TO) command.
 
 2. S3 authentication and connection info
 
-Here, we mainly introduce how to import data stored in AWS S3. For importing data from other object storage systems that support the S3 protocol, you can refer to the steps for AWS S3.
+    Here, we mainly introduce how to import data stored in AWS S3. For importing data from other object storage systems that support the S3 protocol, you can refer to the steps for AWS S3.
 
-- AK and SK: First, you need to find or regenerate your AWS `Access Keys`. You can find instructions on how to generate them in the AWS console under `My Security Credentials`.
+    - AK and SK: First, you need to find or regenerate your AWS `Access Keys`. You can find instructions on how to generate them in the AWS console under `My Security Credentials`.
 
-- REGION and ENDPOINT: The REGION can be selected when creating a bucket or viewed in the bucket list. The S3 ENDPOINT for each REGION can be found in the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/s3.html#s3_region).
+    - REGION and ENDPOINT: The REGION can be selected when creating a bucket or viewed in the bucket list. The S3 ENDPOINT for each REGION can be found in the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/s3.html#s3_region).
 
 ### Create load job
 
 1. Create a CSV file brokerload_example.csv. The file is stored on S3 and its content is as follows:
 
-```
-1,Emily,25
-2,Benjamin,35
-3,Olivia,28
-4,Alexander,60
-5,Ava,17
-6,William,69
-7,Sophia,32
-8,James,64
-9,Emma,37
-10,Liam,64
-```
+    ```
+    1,Emily,25
+    2,Benjamin,35
+    3,Olivia,28
+    4,Alexander,60
+    5,Ava,17
+    6,William,69
+    7,Sophia,32
+    8,James,64
+    9,Emma,37
+    10,Liam,64
+    ```
 
 2. Create Doris table for the load
 
-Create the imported table in Doris. The SQL statement is as follows:
+    Create the imported table in Doris. The SQL statement is as follows:
 
-```sql
-CREATE TABLE testdb.test_brokerload(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-DUPLICATE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 10;
-```
+    ```sql
+    CREATE TABLE testdb.test_brokerload(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    DUPLICATE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 10;
+    ```
 
 3.  Use Broker Load to import data from S3. The bucket name and S3 authentication information should be filled in according to the actual situation:
 
-```sql
-    LOAD LABEL broker_load_2022_04_01
-    (
-        DATA INFILE("s3://your_bucket_name/brokerload_example.csv")
-        INTO TABLE test_brokerload
-        COLUMNS TERMINATED BY ","
-        FORMAT AS "CSV"
-        (user_id, name, age)
-    )
-    WITH S3
-    (
-        "provider" = "S3",
-        "AWS_ENDPOINT" = "s3.us-west-2.amazonaws.com",
-        "AWS_ACCESS_KEY" = "<your-ak>",
-        "AWS_SECRET_KEY"="<your-sk>",
-        "AWS_REGION" = "us-west-2",
-        "compress_type" = "PLAIN"
-    )
-    PROPERTIES
-    (
-        "timeout" = "3600"
-    );
-```
+    ```sql
+        LOAD LABEL broker_load_2022_04_01
+        (
+            DATA INFILE("s3://your_bucket_name/brokerload_example.csv")
+            INTO TABLE test_brokerload
+            COLUMNS TERMINATED BY ","
+            FORMAT AS "CSV"
+            (user_id, name, age)
+        )
+        WITH S3
+        (
+            "provider" = "S3",
+            "AWS_ENDPOINT" = "s3.us-west-2.amazonaws.com",
+            "AWS_ACCESS_KEY" = "<your-ak>",
+            "AWS_SECRET_KEY"="<your-sk>",
+            "AWS_REGION" = "us-west-2",
+            "compress_type" = "PLAIN"
+        )
+        PROPERTIES
+        (
+            "timeout" = "3600"
+        );
+    ```
 
-The `provider` specifies the vendor of the S3 Service.
-Supported S3 Provider list:
+    The `provider` specifies the vendor of the S3 Service.
+    Supported S3 Provider list:
 
-- "S3" (AWS, Amazon Web Services)
-- "AZURE" (Microsoft Azure)
-- "GCP" (GCP, Google Cloud Platform)
-- "OSS" (Alibaba Cloud)
-- "COS" (Tencent Cloud)
-- "OBS" (Huawei Cloud)
-- "BOS" (Baidu Cloud)
+    - "S3" (AWS, Amazon Web Services)
+    - "AZURE" (Microsoft Azure)
+    - "GCP" (GCP, Google Cloud Platform)
+    - "OSS" (Alibaba Cloud)
+    - "COS" (Tencent Cloud)
+    - "OBS" (Huawei Cloud)
+    - "BOS" (Baidu Cloud)
 
-If your service is not in the list (such as MinIO), you can try using "S3" (AWS compatible mode)
+    If your service is not in the list (such as MinIO), you can try using "S3" (AWS compatible mode)
 
 ## Checking import status
 
@@ -252,12 +252,13 @@ The following configurations belong to the system-level settings for Broker load
 | default_load_parallelism | Integer | 8 | Maximum number of concurrent instances per BE node |
 | broker_load_default_timeout_second | 14400 | Default timeout for Broker Load import, in seconds. |
 
-Note: The `min_bytes_per_broker_scanner`, the `max_broker_concurrency`, the size of the source file and the number of BEs in the current cluster jointly determine the number of concurrent execution instances for this load.
+:::Tip
 
-```Plain
+The `min_bytes_per_broker_scanner`, the `max_broker_concurrency`, the size of the source file and the number of BEs in the current cluster jointly determine the number of concurrent execution instances for this load.
 Import Concurrency = Math.min(Source File Size / min_bytes_per_broker_scanner, max_broker_concurrency, Current Number of BE Nodes * load_parallelism)
 Processing Volume per BE for this Import = Source File Size / Import Concurrency
-```
+
+:::
 
 **session variables**
 
@@ -270,84 +271,84 @@ Processing Volume per BE for this Import = Source File Size / Import Concurrency
 
 ### Common Errors
 
-**1. Import Error: `Scan bytes per broker scanner exceed limit:xxx`**
+1. **Import Error: `Scan bytes per broker scanner exceed limit:xxx`**
 
-Please refer to the best practices section in the documentation and modify the FE configuration items `max_bytes_per_broker_scanner` and `max_broker_concurrency.`
+    Please refer to the best practices section in the documentation and modify the FE configuration items `max_bytes_per_broker_scanner` and `max_broker_concurrency.`
 
-**2. Import Error: : `failed to send batch` or `TabletWriter add batch with unknown id`**
+2. **Import Error: : `failed to send batch` or `TabletWriter add batch with unknown id`**
 
-Appropriately adjust the `query_timeout` and `streaming_load_rpc_max_alive_time_sec` settings.
+    Appropriately adjust the `query_timeout` and `streaming_load_rpc_max_alive_time_sec` settings.
 
-**3. Import Error: `LOAD_RUN_FAIL; msg:Invalid Column Name:xxx`**
+3. **Import Error: `LOAD_RUN_FAIL; msg:Invalid Column Name:xxx`**
 
-For PARQUET or ORC format data, the column names in the file header must match the column names in the Doris table. For example:
+    For PARQUET or ORC format data, the column names in the file header must match the column names in the Doris table. For example:
 
-```sql
-(tmp_c1,tmp_c2)
-SET
-(
-    id=tmp_c2,
-    name=tmp_c1
-)
-```
+    ```sql
+    (tmp_c1,tmp_c2)
+    SET
+    (
+        id=tmp_c2,
+        name=tmp_c1
+    )
+    ```
 
-This represents fetching columns named (tmp_c1, tmp_c2) in the parquet or orc file and mapping them to the (id, name) columns in the Doris table. If no set is specified, the columns in the file header will be used for mapping.
+    This represents fetching columns named (tmp_c1, tmp_c2) in the parquet or orc file and mapping them to the (id, name) columns in the Doris table. If no set is specified, the columns in the file header will be used for mapping.
 
-:::info Note
+    :::info Note
 
-If ORC files are generated directly using certain Hive versions, the column headers in the ORC file may not be the Hive metadata, but (_col0, _col1, _col2, ...), which may lead to the Invalid Column Name error. In this case, mapping using SET is necessary.
-:::
+    If ORC files are generated directly using certain Hive versions, the column headers in the ORC file may not be the Hive metadata, but (_col0, _col1, _col2, ...), which may lead to the Invalid Column Name error. In this case, mapping using SET is necessary.
+    :::
 
-**5. Import Error: `Failed to get S3 FileSystem for bucket is null/empty`**
+4. **Import Error: `Failed to get S3 FileSystem for bucket is null/empty`**
 
 The bucket information is incorrect or does not exist. Or the bucket format is not supported. When creating a bucket name with an underscore using GCS, such as `s3://gs_bucket/load_tbl`, the S3 Client may report an error when accessing GCS. It is recommended not to use underscores when creating buckets.
 
-**6. Import Timeout**
+5. **Import Timeout**
 
-The default timeout for imports is 4 hours. If a timeout occurs, it is not recommended to directly increase the maximum import timeout to solve the problem. If the single import time exceeds the default import timeout of 4 hours, it is best to split the file to be imported and perform multiple imports to solve the problem. Setting an excessively long timeout time can lead to high costs for retrying failed imports.
+    The default timeout for imports is 4 hours. If a timeout occurs, it is not recommended to directly increase the maximum import timeout to solve the problem. If the single import time exceeds the default import timeout of 4 hours, it is best to split the file to be imported and perform multiple imports to solve the problem. Setting an excessively long timeout time can lead to high costs for retrying failed imports.
 
-You can calculate the expected maximum import file data volume for the Doris cluster using the following formula:
+    You can calculate the expected maximum import file data volume for the Doris cluster using the following formula:
 
-Expected Maximum Import File Data Volume = 14400s * 10M/s * Number of BEs
+    Expected Maximum Import File Data Volume = 14400s * 10M/s * Number of BEs
 
-For example, if the cluster has 10 BEs:
+    For example, if the cluster has 10 BEs:
 
-Expected Maximum Import File Data Volume = 14400s * 10M/s * 10 = 1440000M ≈ 1440G
+    Expected Maximum Import File Data Volume = 14400s * 10M/s * 10 = 1440000M ≈ 1440G
 
-:::info Note
+    :::info Note
 
-In general, user environments may not reach speeds of 10M/s, so it is recommended to split files exceeding 500G before importing.
-:::
+    In general, user environments may not reach speeds of 10M/s, so it is recommended to split files exceeding 500G before importing.
+    
+    :::
 
 ### S3 Load URL style
 
-- The S3 SDK defaults to using the virtual-hosted style method for accessing objects. However, some object storage systems may not have enabled or supported the virtual-hosted style access. In such cases, we can add the `use_path_style` parameter to force the use of the path style method:
+The S3 SDK defaults to using the virtual-hosted style method for accessing objects. However, some object storage systems may not have enabled or supported the virtual-hosted style access. In such cases, we can add the `use_path_style` parameter to force the use of the path style method:
+```sql
 
-  ```sql
-    WITH S3
-    (
-          "AWS_ENDPOINT" = "AWS_ENDPOINT",
-          "AWS_ACCESS_KEY" = "AWS_ACCESS_KEY",
-          "AWS_SECRET_KEY"="AWS_SECRET_KEY",
-          "AWS_REGION" = "AWS_REGION",
-          "use_path_style" = "true"
-    )
-  ```
+WITH S3 (
+    "AWS_ENDPOINT" = "AWS_ENDPOINT",
+    "AWS_ACCESS_KEY" = "AWS_ACCESS_KEY",
+    "AWS_SECRET_KEY"="AWS_SECRET_KEY",
+    "AWS_REGION" = "AWS_REGION",
+    "use_path_style" = "true"
+)
+```
 
 ### S3 Load temporary credentials
 
-- Support for accessing all object storage systems that support the S3 protocol using temporary credentials (TOKEN) is available. The usage is as follows:
+Support for accessing all object storage systems that support the S3 protocol using temporary credentials (TOKEN) is available. The usage is as follows:
 
-  ```sql
-    WITH S3
-    (
-          "AWS_ENDPOINT" = "AWS_ENDPOINT",
-          "AWS_ACCESS_KEY" = "AWS_TEMP_ACCESS_KEY",
-          "AWS_SECRET_KEY" = "AWS_TEMP_SECRET_KEY",
-          "AWS_TOKEN" = "AWS_TEMP_TOKEN",
-          "AWS_REGION" = "AWS_REGION"
-    )
-  ```
+```sql
+WITH S3 (
+    "AWS_ENDPOINT" = "AWS_ENDPOINT",
+    "AWS_ACCESS_KEY" = "AWS_TEMP_ACCESS_KEY",
+    "AWS_SECRET_KEY" = "AWS_TEMP_SECRET_KEY",
+    "AWS_TOKEN" = "AWS_TEMP_TOKEN",
+    "AWS_REGION" = "AWS_REGION"
+)
+```
+
 
 ### HDFS Simple Authentication
 
@@ -488,7 +489,7 @@ Different Broker types and access methods require different authentication infor
 
 ## Broker Load examples
 
-### Importing TXT Files from HDFS
+#### Importing TXT Files from HDFS
 
   ```sql
   LOAD LABEL demo.label_20220402
@@ -510,7 +511,7 @@ Different Broker types and access methods require different authentication infor
   );
   ```
 
-### HDFS requires the configuration of NameNode HA (High Availability)
+#### HDFS requires the configuration of NameNode HA (High Availability)
 
   ```sql
   LOAD LABEL demo.label_20220402
@@ -537,7 +538,7 @@ Different Broker types and access methods require different authentication infor
   );
   ```
 
-### Importing data from HDFS using wildcards to match two batches of files and importing them into two separate tables
+#### Importing data from HDFS using wildcards to match two batches of files and importing them into two separate tables
 
   ```sql
   LOAD LABEL example_db.label2
@@ -565,7 +566,7 @@ Different Broker types and access methods require different authentication infor
 
 To import two batches of files matching the wildcards `file-10*` and `file-20*` from HDFS and load them into two separate tables `my_table1` and `my_table2`. In this case, my_table1 specifies that the data should be imported into partition p1, and the values in the second and third columns of the source files should be incremented by 1 before being imported.
 
-### Import a batch of data from HDFS using wildcards
+#### Import a batch of data from HDFS using wildcards
 
   ```sql
   LOAD LABEL example_db.label3
@@ -583,7 +584,7 @@ To import two batches of files matching the wildcards `file-10*` and `file-20*` 
 
 To specify the delimiter as the commonly used default delimiter for Hive, which is \x01, and to use the wildcard character * to refer to all files in all directories under the data directory.
 
-### Import Parquet format data and specify the FORMAT as `parquet`
+#### Import Parquet format data and specify the FORMAT as `parquet`
 
   ```sql
   LOAD LABEL example_db.label4
@@ -602,7 +603,7 @@ To specify the delimiter as the commonly used default delimiter for Hive, which 
 
 The default method is to determine by file extension.
 
-### Import the data and extract the partition field from the file path
+#### Import the data and extract the partition field from the file path
 
   ```sql
   LOAD LABEL example_db.label5
@@ -633,7 +634,7 @@ hdfs://hdfs_host:hdfs_port/input/city=tianji/utc_date=2020-10-04/0000.csv
 
 The file only contains three columns of data:`k1`,`k2`, and `k3`. The other two columns,`city` and `utc_date`, will be extracted from the file path.
 
-### Filter the imported data
+#### Filter the imported data
 
   ```sql
   LOAD LABEL example_db.label6
@@ -656,7 +657,7 @@ The file only contains three columns of data:`k1`,`k2`, and `k3`. The other two 
 
 Only the rows where k1 = 1 in the original data and k1 > k2 after transformation will be imported.
 
-### Import data and extract the time partition field from the file path.
+#### Import data and extract the time partition field from the file path.
 
   ```sql
   LOAD LABEL example_db.label7
@@ -701,7 +702,7 @@ PROPERTIES (
 );
 ```
 
-### Use Merge mode for import
+#### Use Merge mode for import
 
   ```sql
   LOAD LABEL example_db.label8
@@ -725,7 +726,7 @@ PROPERTIES (
 
 To use Merge mode for import, the "my_table" must be a Unique Key table. When the value of the "v2" column in the imported data is greater than 100, that row will be considered a deletion row. The timeout for the import task is 3600 seconds, and an error rate of up to 10% is allowed.
 
-### Specify the "source_sequence" column during import to ensure the order of replacements.
+#### Specify the "source_sequence" column during import to ensure the order of replacements.
 
   ```sql
   LOAD LABEL example_db.label9
@@ -744,7 +745,7 @@ To use Merge mode for import, the "my_table" must be a Unique Key table. When th
   The "my_table" must be a Unique Key model table and have a specified Sequence column. The data will maintain its order based on the values in the "source_sequence" column in the source data.
   ```
 
-### Import the specified file format as `json`, and specify the `json_root` and jsonpaths accordingly.
+#### Import the specified file format as `json`, and specify the `json_root` and jsonpaths accordingly.
 
   ```sql
   LOAD LABEL example_db.label10
@@ -786,7 +787,7 @@ The `jsonpaths` can also be used in conjunction with the column list and `SET (c
   );
   ```
 
-### Load from other brokers
+#### Load from other brokers
 
 - Alibaba Cloud OSS
 

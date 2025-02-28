@@ -100,13 +100,7 @@ PROPERTIES
 ### 第 4 步：检查导入数据
 
 ```sql
-SELECT * FROM test_s3load;
-```
-
-结果：
-
-```
-mysql> select * from test_s3load;
+SELECT * FROM test_s3load; 
 +---------+-----------+------+
 | user_id | name      | age  |
 +---------+-----------+------+
@@ -188,12 +182,6 @@ SELECT * FROM S3
 
 ```sql
 SELECT * FROM test_s3load;
-```
-
-结果：
-
-```
-mysql> select * from test_s3load;
 +---------+-----------+------+
 | user_id | name      | age  |
 +---------+-----------+------+

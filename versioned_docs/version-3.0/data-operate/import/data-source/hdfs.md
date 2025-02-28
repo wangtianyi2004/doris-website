@@ -87,12 +87,6 @@ PROPERTIES
 
 ```sql
 SELECT * FROM test_hdfsload;
-```
-
-Results:
-
-```
-mysql> select * from test_hdfsload;
 +---------+-----------+------+
 | user_id | name      | age  |
 +---------+-----------+------+
@@ -158,12 +152,6 @@ SELECT * FROM hdfs (
 
 ```sql
 SELECT * FROM test_hdfsload;
-```
-
-Results:
-
-```
-mysql> select * from test_hdfsload;
 +---------+-----------+------+
 | user_id | name      | age  |
 +---------+-----------+------+

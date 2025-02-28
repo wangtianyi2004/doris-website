@@ -179,7 +179,7 @@ In Doris, you can check the status of Routine Load jobs and tasks using the foll
 
 - Load Tasks: Used to view the status of individual load tasks, including task ID, transaction status, task status, execution start time, and BE (Backend) node assignment.
 
-**01 Viewing Running Jobs**
+**Viewing Running Jobs**
 
 You can use the `SHOW ROUTINE LOAD` command to check the status of jobs. The `SHOW ROUTINE LOAD` command provides information about the current job, including the target table, load delay status, load configuration, and error messages.
 
@@ -213,7 +213,7 @@ ReasonOfStateChanged:
 1 row in set (0.00 sec)
 ```
 
-**02 Viewing Running Tasks**
+**Viewing Running Tasks**
 
 You can use the `SHOW ROUTINE LOAD TASK` command to check the status of load tasks. The `SHOW ROUTINE LOAD TASK` command provides information about the individual tasks under a specific load job, including task ID, transaction status, task status, execution start time, and BE ID.
 
@@ -307,120 +307,112 @@ The modules for creating a loading job are explained as follows:
 | data_source_properties | Describes the properties of Kafka data source.               |
 | comment                | Describes any additional comments for the loading job.       |
 
+- **tbl_name Clause**
+
+    Specifies the name of the table to be loaded. This parameter is optional.
+
+    If not specified, the dynamic table mode is used, which requires the data in Kafka to contain the table name information. Currently, only extracting the table name from the Value field of Kafka is supported. The format should be as follows, using JSON as an example: `table_name|{"col1": "val1", "col2": "val2"}`, where `tbl_name` is the table name and `|` is used as the separator between the table name and the table data. The same format applies to CSV data, such as `table_name|val1,val2,val3`. Note that the `table_name` here must be consistent with the table name in Doris, otherwise the load will fail. Note that dynamic tables do not support the column_mapping configuration described later.
+
+
+
+- **merge_type Clause**
+
+    The merge_type module specifies the type of data merging. There are three options for merge_type:
+
+    - APPEND: Append load mode.
+
+    - MERGE: Merge load mode. Only applicable to Unique Key models. It needs to be used together with the [DELETE ON] module to mark the Delete Flag column.
+
+    - DELETE: All loaded data is data that needs to be deleted.
+
+- **load_properties Clause**
+
+    The load_properties module describes the properties of the loaded data using the following syntax:
+
+    ```sql
+    [COLUMNS TERMINATED BY <column_separator>,]
+    [COLUMNS (<column1_name>[, <column2_name>, <column_mapping>, ...]),]
+    [WHERE <where_expr>,]
+    [PARTITION(<partition1_name>, [<partition2_name>, <partition3_name>, ...]),]
+    [DELETE ON <delete_expr>,]
+    [ORDER BY <order_by_column1>[, <order_by_column2>, <order_by_column3>, ...]]
+    ```
+
+    The specific parameters for each module are as follows:
+
+    | Submodule             | Parameter            | Description                                                  |
+    | --------------------- | -------------------- | ------------------------------------------------------------ |
+    | COLUMNS TERMINATED BY | `<column_separator>` | Specifies the column delimiter, defaulting to `\t`. For example, to specify a comma as the delimiter, use `COLUMNS TERMINATED BY ","`. When handling empty values, note the following:<ul><li>Null values should be represented as `\n`. For example, `a,\n,b` represents a null value in the middle column.</li><li>Empty strings (`''`) are treated as empty values. For example, `a,,b` represents an empty string in the middle column.</li></ul>|
+    | COLUMNS               | `<column_name>`      | Specifies the corresponding column names. For example, to specify the load columns as `(k1, k2, k3)`, use `COLUMNS(k1, k2, k3)`. The COLUMNS clause can be omitted in the following cases:<ul><li>When the columns in the CSV match the table columns one by one.</li><li>When the key columns in JSON have the same names as the table columns.</li></ul> |
+    |                       | `<column_mapping>`   | During the load process, column mapping can be used to filter and transform columns. For example, if the target column needs to perform a derived calculation based on a column in the data source (e.g., the target column k4 is calculated as k3 + 1 based on the k3 column), you can use `COLUMNS(k1, k2, k3, k4 = k3 + 1)`. For more details, refer to the [Data Conversion](../../../data-operate/import/load-data-convert) documentation. |
+    | WHERE                 | `<where_expr>`       | Specifies the condition to filter the loaded data source. For example, to load only data where age > 30, use `WHERE age > 30`. |
+    | PARTITION             | `<partition_name>`   | Specifies which partitions in the target table to load. If not specified, it will automatically load into the corresponding partitions. For example, to load partitions p1 and p2 of the target table, use `PARTITION(p1, p2)`. |
+    | DELETE ON             | `<delete_expr>`      | In the MERGE load mode, using delete_expr to mark which columns need to be deleted. For example, to delete columns where age > 30 during the MERGE process, use `DELETE ON age > 30`. |
+    | ORDER BY              | `<order_by_column>`  | Only effective for Unique Key models. Specifies the Sequence Column in the loaded data to ensure the order of the data. For example, when loading into a Unique Key table and specifying create_time as the Sequence Column, use `ORDER BY create_time`. For more information on Sequence Columns in Unique Key models, refer to the [Data Update/Sequence Columns](../../../data-operate/update/update-of-unique-model) |
+
+- **job_properties Clause**
+
+    The job_properties clause is used to specify the properties of a Routine Load job when creating it. The syntax is as follows:
+
+    ```sql
+    PROPERTIES ("<key1>" = "<value1>"[, "<key2>" = "<value2>" ...])
+    ```
+
+    Here are the available parameters for the job_properties clause:
+
+    | Parameter                   | Description                                                  |
+    | --------------------------- | ------------------------------------------------------------ |
+    | desired_concurrent_number   | <ul><li>Default value: 256</li><li>Description: Specifies the desired concurrency for a single load subtask (load task). It modifies the expected number of load subtasks for a Routine Load job. The actual concurrency during the load process may not be equal to the desired concurrency. The actual concurrency is determined based on factors such as the number of nodes in the cluster, the load on the cluster, and the characteristics of the data source. The actual number of loading subtasks can be calculated using the following formula:</li><li>`min(topic_partition_num, desired_concurrent_number, max_routine_load_task_concurrent_num)`</li> <li>where:</li><li>topic_partition_num: The number of partitions in the Kafka topic</li><li>desired_concurrent_number: The parameter value set</li><li>max_routine_load_task_concurrent_num: The parameter for setting the maximum task parallelism for Routine Load in the FE</li></ul> |
+    | max_batch_interval          | The maximum running time for each subtask, in seconds. Must be greater than 0, with a default value of 60s. max_batch_interval/max_batch_rows/max_batch_size together form the execution threshold for subtasks. If any of these parameters reaches the threshold, the load subtask ends and a new one is generated. |
+    | max_batch_rows              | The maximum number of rows read by each subtask. Must be greater than or equal to 200,000. The default value is 20,000,000. max_batch_interval/max_batch_rows/max_batch_size together form the execution threshold for subtasks. If any of these parameters reaches the threshold, the load subtask ends and a new one is generated. |
+    | max_batch_size              | The maximum number of bytes read by each subtask. The unit is bytes, and the range is from 100MB to 10GB. The default value is 1G. max_batch_interval/max_batch_rows/max_batch_size together form the execution threshold for subtasks. If any of these parameters reaches the threshold, the load subtask ends and a new one is generated. |
+    | max_error_number            | The maximum number of error rows allowed within a sampling window. Must be greater than or equal to 0. The default value is 0, which means no error rows are allowed. The sampling window is `max_batch_rows * 10`. If the number of error rows within the sampling window exceeds `max_error_number`, the regular job will be paused and manual intervention is required to check for data quality issues using the [SHOW ROUTINE LOAD](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-ROUTINE-LOAD) command and `ErrorLogUrls`. Rows filtered out by the WHERE condition are not counted as error rows. |
+    | strict_mode                 | Whether to enable strict mode. The default value is disabled. Strict mode applies strict filtering to type conversions during the load process. If enabled, non-null original data that results in a NULL after type conversion will be filtered out. The filtering rules in strict mode are as follows:<ul><li>Derived columns (generated by functions) are not affected by strict mode.</li><li>If a column's type needs to be converted, any data with an incorrect data type will be filtered out. You can check the filtered columns due to data type errors in the `ErrorLogUrls` of [SHOW ROUTINE LOAD](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-ROUTINE-LOAD).</li><li>For columns with range restrictions, if the original data can be successfully converted but falls outside the declared range, strict mode does not affect it. For example, if the type is decimal(1,0) and the original data is 10, it can be converted but is not within the range declared for the column. Strict mode does not affect this type of data. For more details, see [Strict Mode](../../../data-operate/import/handling-messy-data#strict-mode).</li></ul> |
+    | timezone                    | Specifies the time zone used by the load job. The default is to use the session's timezone parameter. This parameter affects the results of all timezone-related functions involved in the load. |
+    | format                      | Specifies the data format for the load. The default is CSV, and JSON format is supported. |
+    | jsonpaths                   | When the data format is JSON, jsonpaths can be used to specify the JSON paths to extract data from nested structures. It is a JSON array of strings, where each string represents a JSON path. |
+    | json_root                 | When importing JSON format data, you can specify the root node of the JSON data through json_root. Doris will extract and parse elements from the root node. Default is empty. For example, specify the JSON root node with: `"json_root" = "$.RECORDS"` |
+    | strip_outer_array         | When importing JSON format data, if strip_outer_array is true, it indicates that the JSON data is presented as an array, and each element in the data will be treated as a row. Default value is false. Typically, JSON data in Kafka might be represented as an array with square brackets `[]` in the outermost layer. In this case, you can specify `"strip_outer_array" = "true"` to consume Topic data in array mode. For example, the following data will be parsed into two rows: `[{"user_id":1,"name":"Emily","age":25},{"user_id":2,"name":"Benjamin","age":35}]` |
+    | send_batch_parallelism    | Used to set the parallelism of sending batch data. If the parallelism value exceeds the `max_send_batch_parallelism_per_job` in BE configuration, the coordinating BE will use the value of `max_send_batch_parallelism_per_job`. |
+    | load_to_single_tablet     | Supports importing data to only one tablet in the corresponding partition per task. Default value is false. This parameter can only be set when importing data to OLAP tables with random bucketing. |
+    | partial_columns           | Specifies whether to enable partial column update feature. Default value is false. This parameter can only be set when the table model is Unique and uses Merge on Write. Multi-table streaming does not support this parameter. For details, refer to [Partial Column Update](../../../data-operate/update/update-of-unique-model) |
+    | max_filter_ratio          | The maximum allowed filter ratio within the sampling window. Must be between 0 and 1 inclusive. Default value is 1.0, indicating any error rows can be tolerated. The sampling window is `max_batch_rows * 10`. If the ratio of error rows to total rows within the sampling window exceeds `max_filter_ratio`, the routine job will be suspended and require manual intervention to check data quality issues. Rows filtered by WHERE conditions are not counted as error rows. |
+    | enclose                   | Specifies the enclosing character. When CSV data fields contain line or column separators, a single-byte character can be specified as an enclosing character for protection to prevent accidental truncation. For example, if the column separator is "," and the enclosing character is "'", the data "a,'b,c'" will have "b,c" parsed as one field. |
+    | escape                    | Specifies the escape character. Used to escape characters in fields that are identical to the enclosing character. For example, if the data is "a,'b,'c'", the enclosing character is "'", and you want "b,'c" to be parsed as one field, you need to specify a single-byte escape character, such as "\", and modify the data to "a,'b,\'c'". |
+
+    These parameters can be used to customize the behavior of a Routine Load job according to your specific requirements.
+
+- **data_source_properties Clause**
+
+    When creating a Routine Load job, you can specify the data_source_properties clause to specify properties of the Kafka data source. The syntax is as follows:
+
+    ```sql
+    FROM KAFKA ("<key1>" = "<value1>"[, "<key2>" = "<value2>" ...])
+    ```
+
+    The available options for the data_source_properties clause are as follows:
+
+    | Parameter         | Description                                                  |
+    | ----------------- | ------------------------------------------------------------ |
+    | kafka_broker_list | Specifies the connection information for Kafka brokers. The format is `<kafka_broker_ip>:<kafka_port>`. Multiple brokers are separated by commas. For example, to specify a Broker List with the default port 9092, you can use the following command: `"kafka_broker_list" = "<broker1_ip>:9092,<broker2_ip>:9092"` |
+    | kafka_topic       | Specifies the Kafka topic to subscribe to. A load job can only consume one Kafka topic. |
+    | kafka_partitions  | Specifies the Kafka partitions to subscribe to. If not specified, all partitions are consumed by default. |
+    | kafka_offsets     | Specifies the starting consumption offset for Kafka partitions. If a timestamp is specified, consumption starts from the nearest offset equal to or greater than that timestamp. The offset can be a specific offset greater than or equal to 0, or it can use the following formats:<ul><li>OFFSET_BEGINNING: Starts consuming from the position where there is data.</li><li>OFFSET_END: Starts consuming from the end.</li><li>Timestamp format, e.g., "2021-05-22 11:00:00"</li><li>If not specified, consumption starts from `OFFSET_END` for all partitions under the topic.</li><li>Multiple starting consumption offsets can be specified, separated by commas, such as `"kafka_offsets" = "101,0,OFFSET_BEGINNING,OFFSET_END"` or `"kafka_offsets" = "2021-05-22 11:00:00,2021-05-22 11:00:00"`</li><li>Note that timestamp format cannot be mixed with OFFSET format.</li></ul> |
+    | property          | Specifies custom Kafka parameters. This is equivalent to the "--property" parameter in the Kafka shell. When the value of a parameter is a file, the keyword "FILE:" needs to be added before the value. For creating a file, you can refer to the [CREATE FILE](../../../sql-manual/sql-statements/security/CREATE-FILE) command documentation. For more supported custom parameters, you can refer to the client-side configuration options in the official [CONFIGURATION](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md) documentation of librdkafka. For example: `"property.client.id" = "12345"`, `"property.group.id" = "group_id_0"`, `"property.ssl.ca.location" = "FILE:ca.pem"` |
+
+    By configuring the Kafka property parameter in the `data_source_properties`, you can set up security access options. Currently, Doris supports various Kafka security protocols such as plaintext (default), SSL, PLAIN, and Kerberos.
+
 ### Load Parameter Description
 
-**01 FE Configuration Parameters**
+| Parameter Name                          | Default Value | Dynamic Configuration | FE/BE | Description                                                                                     |
+|-----------------------------------------|---------------|-----------------------|-------|-------------------------------------------------------------------------------------------------|
+| max_routine_load_task_concurrent_num   | 256           | Yes                   | FE    | Limits the maximum number of sub-concurrent tasks for Routine Load import jobs. It is recommended to keep the default value. If set too high, it may result in excessive concurrent tasks, occupying cluster resources. |
+| max_routine_load_task_num_per_be       | 1024          | Yes                   | FE    | Limits the maximum number of concurrent Routine Load tasks per BE. `max_routine_load_task_num_per_be` should be smaller than `routine_load_thread_pool_size`. |
+| max_routine_load_job_num               | 100           | Yes                   | FE    | Limits the maximum number of Routine Load jobs, including NEED_SCHEDULED, RUNNING, PAUSE.        |
+| max_tolerable_backend_down_num         | 0             | Yes                   | FE    | Routine Load cannot automatically recover if one BE goes down. Doris can reschedule PAUSED tasks to RUNNING under certain conditions. A value of 0 means rescheduling is only allowed when all BE nodes are alive. |
+| period_of_auto_resume_min              | 5 (minutes)   | Yes                   | FE    | The cycle for automatically resuming Routine Load jobs.                                          |
+| max_consumer_num_per_group             | 3             | Yes                   | BE    | The maximum number of consumers a sub-task can generate to consume data.                         |
 
-| Parameter Name                          | Default Value | Dynamic Configuration | FE Master Exclusive Configuration | Description                                                                                     |
-|-----------------------------------------|---------------|-----------------------|----------------------------------|-------------------------------------------------------------------------------------------------|
-| max_routine_load_task_concurrent_num   | 256           | Yes                   | Yes                              | Limits the maximum number of concurrent subtasks for Routine Load jobs. It is recommended to maintain the default value. If set too high, it may lead to excessive concurrent tasks, consuming cluster resources. |
-| max_routine_load_task_num_per_be       | 1024          | Yes                   | Yes                              | The maximum number of concurrent Routine Load tasks allowed per BE. `max_routine_load_task_num_per_be` should be less than `routine_load_thread_pool_size`. |
-| max_routine_load_job_num                | 100           | Yes                   | Yes                              | Limits the maximum number of Routine Load jobs, including NEED_SCHEDULED, RUNNING, and PAUSE. |
-| max_tolerable_backend_down_num          | 0             | Yes                   | Yes                              | If any BE is down, Routine Load cannot automatically recover. Under certain conditions, Doris can reschedule PAUSED tasks to RUNNING state. A value of 0 means that rescheduling is only allowed when all BE nodes are alive. |
-| period_of_auto_resume_min               | 5 (minutes)   | Yes                   | Yes                              | The period for automatically resuming Routine Load. |
-
-**02 BE Configuration Parameters**
-
-| Parameter Name                     | Default Value | Dynamic Configuration | Description                                                                                                           |
-|------------------------------------|---------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------|
-| max_consumer_num_per_group         | 3             | Yes                   | The maximum number of consumers that can be generated for a subtask to consume data. For Kafka data sources, a consumer may consume one or more Kafka partitions. If a task needs to consume 6 Kafka partitions, it will generate 3 consumers, each consuming 2 partitions. If there are only 2 partitions, it will generate only 2 consumers, each consuming 1 partition. |
-
-### Load Configuration Parameters
-
-When creating a Routine Load job, you can specify the load configuration parameters for different modules using the `CREATE ROUTINE LOAD` command.
-
-**tbl_name Clause**
-
-Specifies the name of the table to be loaded. This parameter is optional.
-
-If not specified, the dynamic table mode is used, which requires the data in Kafka to contain the table name information. Currently, only extracting the table name from the Value field of Kafka is supported. The format should be as follows, using JSON as an example: `table_name|{"col1": "val1", "col2": "val2"}`, where `tbl_name` is the table name and `|` is used as the separator between the table name and the table data. The same format applies to CSV data, such as `table_name|val1,val2,val3`. Note that the `table_name` here must be consistent with the table name in Doris, otherwise the load will fail. Note that dynamic tables do not support the column_mapping configuration described later.
-
-**merge_type Clause**
-
-The merge_type module specifies the type of data merging. There are three options for merge_type:
-
-- APPEND: Append load mode.
-
-- MERGE: Merge load mode. Only applicable to Unique Key models. It needs to be used together with the [DELETE ON] module to mark the Delete Flag column.
-
-- DELETE: All loaded data is data that needs to be deleted.
-
-**load_properties Clause**
-
-The load_properties module describes the properties of the loaded data using the following syntax:
-
-```sql
-[COLUMNS TERMINATED BY <column_separator>,]
-[COLUMNS (<column1_name>[, <column2_name>, <column_mapping>, ...]),]
-[WHERE <where_expr>,]
-[PARTITION(<partition1_name>, [<partition2_name>, <partition3_name>, ...]),]
-[DELETE ON <delete_expr>,]
-[ORDER BY <order_by_column1>[, <order_by_column2>, <order_by_column3>, ...]]
-```
-
-The specific parameters for each module are as follows:
-
-| Submodule             | Parameter            | Description                                                  |
-| --------------------- | -------------------- | ------------------------------------------------------------ |
-| COLUMNS TERMINATED BY | `<column_separator>` | Specifies the column delimiter, defaulting to `\t`. For example, to specify a comma as the delimiter, use `COLUMNS TERMINATED BY ","`. When handling empty values, note the following:<ul><li>Null values should be represented as `\n`. For example, `a,\n,b` represents a null value in the middle column.</li><li>Empty strings (`''`) are treated as empty values. For example, `a,,b` represents an empty string in the middle column.</li></ul>|
-| COLUMNS               | `<column_name>`      | Specifies the corresponding column names. For example, to specify the load columns as `(k1, k2, k3)`, use `COLUMNS(k1, k2, k3)`. The COLUMNS clause can be omitted in the following cases:<ul><li>When the columns in the CSV match the table columns one by one.</li><li>When the key columns in JSON have the same names as the table columns.</li></ul> |
-|                       | `<column_mapping>`   | During the load process, column mapping can be used to filter and transform columns. For example, if the target column needs to perform a derived calculation based on a column in the data source (e.g., the target column k4 is calculated as k3 + 1 based on the k3 column), you can use `COLUMNS(k1, k2, k3, k4 = k3 + 1)`. For more details, refer to the [Data Conversion](../../../data-operate/import/load-data-convert) documentation. |
-| WHERE                 | `<where_expr>`       | Specifies the condition to filter the loaded data source. For example, to load only data where age > 30, use `WHERE age > 30`. |
-| PARTITION             | `<partition_name>`   | Specifies which partitions in the target table to load. If not specified, it will automatically load into the corresponding partitions. For example, to load partitions p1 and p2 of the target table, use `PARTITION(p1, p2)`. |
-| DELETE ON             | `<delete_expr>`      | In the MERGE load mode, using delete_expr to mark which columns need to be deleted. For example, to delete columns where age > 30 during the MERGE process, use `DELETE ON age > 30`. |
-| ORDER BY              | `<order_by_column>`  | Only effective for Unique Key models. Specifies the Sequence Column in the loaded data to ensure the order of the data. For example, when loading into a Unique Key table and specifying create_time as the Sequence Column, use `ORDER BY create_time`. For more information on Sequence Columns in Unique Key models, refer to the [Data Update/Sequence Columns](../../../data-operate/update/update-of-unique-model) |
-
-**job_properties Clause**
-
-The job_properties clause is used to specify the properties of a Routine Load job when creating it. The syntax is as follows:
-
-```sql
-PROPERTIES ("<key1>" = "<value1>"[, "<key2>" = "<value2>" ...])
-```
-
-Here are the available parameters for the job_properties clause:
-
-| Parameter                   | Description                                                  |
-| --------------------------- | ------------------------------------------------------------ |
-| desired_concurrent_number   | <ul><li>Default value: 256</li><li>Description: Specifies the desired concurrency for a single load subtask (load task). It modifies the expected number of load subtasks for a Routine Load job. The actual concurrency during the load process may not be equal to the desired concurrency. The actual concurrency is determined based on factors such as the number of nodes in the cluster, the load on the cluster, and the characteristics of the data source. The actual number of loading subtasks can be calculated using the following formula:</li><li>`min(topic_partition_num, desired_concurrent_number, max_routine_load_task_concurrent_num)`</li> <li>where:</li><li>topic_partition_num: The number of partitions in the Kafka topic</li><li>desired_concurrent_number: The parameter value set</li><li>max_routine_load_task_concurrent_num: The parameter for setting the maximum task parallelism for Routine Load in the FE</li></ul> |
-| max_batch_interval          | The maximum running time for each subtask, in seconds. Must be greater than 0, with a default value of 60s. max_batch_interval/max_batch_rows/max_batch_size together form the execution threshold for subtasks. If any of these parameters reaches the threshold, the load subtask ends and a new one is generated. |
-| max_batch_rows              | The maximum number of rows read by each subtask. Must be greater than or equal to 200,000. The default value is 20,000,000. max_batch_interval/max_batch_rows/max_batch_size together form the execution threshold for subtasks. If any of these parameters reaches the threshold, the load subtask ends and a new one is generated. |
-| max_batch_size              | The maximum number of bytes read by each subtask. The unit is bytes, and the range is from 100MB to 10GB. The default value is 1G. max_batch_interval/max_batch_rows/max_batch_size together form the execution threshold for subtasks. If any of these parameters reaches the threshold, the load subtask ends and a new one is generated. |
-| max_error_number            | The maximum number of error rows allowed within a sampling window. Must be greater than or equal to 0. The default value is 0, which means no error rows are allowed. The sampling window is `max_batch_rows * 10`. If the number of error rows within the sampling window exceeds `max_error_number`, the regular job will be paused and manual intervention is required to check for data quality issues using the [SHOW ROUTINE LOAD](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-ROUTINE-LOAD) command and `ErrorLogUrls`. Rows filtered out by the WHERE condition are not counted as error rows. |
-| strict_mode                 | Whether to enable strict mode. The default value is disabled. Strict mode applies strict filtering to type conversions during the load process. If enabled, non-null original data that results in a NULL after type conversion will be filtered out. The filtering rules in strict mode are as follows:<ul><li>Derived columns (generated by functions) are not affected by strict mode.</li><li>If a column's type needs to be converted, any data with an incorrect data type will be filtered out. You can check the filtered columns due to data type errors in the `ErrorLogUrls` of [SHOW ROUTINE LOAD](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-ROUTINE-LOAD).</li><li>For columns with range restrictions, if the original data can be successfully converted but falls outside the declared range, strict mode does not affect it. For example, if the type is decimal(1,0) and the original data is 10, it can be converted but is not within the range declared for the column. Strict mode does not affect this type of data. For more details, see [Strict Mode](../../../data-operate/import/handling-messy-data#strict-mode).</li></ul> |
-| timezone                    | Specifies the time zone used by the load job. The default is to use the session's timezone parameter. This parameter affects the results of all timezone-related functions involved in the load. |
-| format                      | Specifies the data format for the load. The default is CSV, and JSON format is supported. |
-| jsonpaths                   | When the data format is JSON, jsonpaths can be used to specify the JSON paths to extract data from nested structures. It is a JSON array of strings, where each string represents a JSON path. |
-| json_root                 | When importing JSON format data, you can specify the root node of the JSON data through json_root. Doris will extract and parse elements from the root node. Default is empty. For example, specify the JSON root node with: `"json_root" = "$.RECORDS"` |
-| strip_outer_array         | When importing JSON format data, if strip_outer_array is true, it indicates that the JSON data is presented as an array, and each element in the data will be treated as a row. Default value is false. Typically, JSON data in Kafka might be represented as an array with square brackets `[]` in the outermost layer. In this case, you can specify `"strip_outer_array" = "true"` to consume Topic data in array mode. For example, the following data will be parsed into two rows: `[{"user_id":1,"name":"Emily","age":25},{"user_id":2,"name":"Benjamin","age":35}]` |
-| send_batch_parallelism    | Used to set the parallelism of sending batch data. If the parallelism value exceeds the `max_send_batch_parallelism_per_job` in BE configuration, the coordinating BE will use the value of `max_send_batch_parallelism_per_job`. |
-| load_to_single_tablet     | Supports importing data to only one tablet in the corresponding partition per task. Default value is false. This parameter can only be set when importing data to OLAP tables with random bucketing. |
-| partial_columns           | Specifies whether to enable partial column update feature. Default value is false. This parameter can only be set when the table model is Unique and uses Merge on Write. Multi-table streaming does not support this parameter. For details, refer to [Partial Column Update](../../../data-operate/update/update-of-unique-model) |
-| max_filter_ratio          | The maximum allowed filter ratio within the sampling window. Must be between 0 and 1 inclusive. Default value is 1.0, indicating any error rows can be tolerated. The sampling window is `max_batch_rows * 10`. If the ratio of error rows to total rows within the sampling window exceeds `max_filter_ratio`, the routine job will be suspended and require manual intervention to check data quality issues. Rows filtered by WHERE conditions are not counted as error rows. |
-| enclose                   | Specifies the enclosing character. When CSV data fields contain line or column separators, a single-byte character can be specified as an enclosing character for protection to prevent accidental truncation. For example, if the column separator is "," and the enclosing character is "'", the data "a,'b,c'" will have "b,c" parsed as one field. |
-| escape                    | Specifies the escape character. Used to escape characters in fields that are identical to the enclosing character. For example, if the data is "a,'b,'c'", the enclosing character is "'", and you want "b,'c" to be parsed as one field, you need to specify a single-byte escape character, such as "\", and modify the data to "a,'b,\'c'". |
-
-These parameters can be used to customize the behavior of a Routine Load job according to your specific requirements.
-
-**04 data_source_properties Clause**
-
-When creating a Routine Load job, you can specify the data_source_properties clause to specify properties of the Kafka data source. The syntax is as follows:
-
-```sql
-FROM KAFKA ("<key1>" = "<value1>"[, "<key2>" = "<value2>" ...])
-```
-
-The available options for the data_source_properties clause are as follows:
-
-| Parameter         | Description                                                  |
-| ----------------- | ------------------------------------------------------------ |
-| kafka_broker_list | Specifies the connection information for Kafka brokers. The format is `<kafka_broker_ip>:<kafka_port>`. Multiple brokers are separated by commas. For example, to specify a Broker List with the default port 9092, you can use the following command: `"kafka_broker_list" = "<broker1_ip>:9092,<broker2_ip>:9092"` |
-| kafka_topic       | Specifies the Kafka topic to subscribe to. A load job can only consume one Kafka topic. |
-| kafka_partitions  | Specifies the Kafka partitions to subscribe to. If not specified, all partitions are consumed by default. |
-| kafka_offsets     | Specifies the starting consumption offset for Kafka partitions. If a timestamp is specified, consumption starts from the nearest offset equal to or greater than that timestamp. The offset can be a specific offset greater than or equal to 0, or it can use the following formats:<ul><li>OFFSET_BEGINNING: Starts consuming from the position where there is data.</li><li>OFFSET_END: Starts consuming from the end.</li><li>Timestamp format, e.g., "2021-05-22 11:00:00"</li><li>If not specified, consumption starts from `OFFSET_END` for all partitions under the topic.</li><li>Multiple starting consumption offsets can be specified, separated by commas, such as `"kafka_offsets" = "101,0,OFFSET_BEGINNING,OFFSET_END"` or `"kafka_offsets" = "2021-05-22 11:00:00,2021-05-22 11:00:00"`</li><li>Note that timestamp format cannot be mixed with OFFSET format.</li></ul> |
-| property          | Specifies custom Kafka parameters. This is equivalent to the "--property" parameter in the Kafka shell. When the value of a parameter is a file, the keyword "FILE:" needs to be added before the value. For creating a file, you can refer to the [CREATE FILE](../../../sql-manual/sql-statements/security/CREATE-FILE) command documentation. For more supported custom parameters, you can refer to the client-side configuration options in the official [CONFIGURATION](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md) documentation of librdkafka. For example: `"property.client.id" = "12345"`, `"property.group.id" = "group_id_0"`, `"property.ssl.ca.location" = "FILE:ca.pem"` |
-
-By configuring the Kafka property parameter in the `data_source_properties`, you can set up security access options. Currently, Doris supports various Kafka security protocols such as plaintext (default), SSL, PLAIN, and Kerberos.
 
 ### Load Status
 
@@ -1593,95 +1585,95 @@ The columns in the result set provide the following information:
 
 **Loading Kafka Data with SSL Authentication**
 
-Example load command:
+1. Example load command:
 
-```SQL
-CREATE ROUTINE LOAD demo.kafka_job20 ON routine_test20
-        PROPERTIES
-        (
-            "format" = "json"
-        )
-        FROM KAFKA
-        (
-            "kafka_broker_list" = "192.168.100.129:9092",
-            "kafka_topic" = "routineLoad21",
-            "property.security.protocol" = "ssl",
-            "property.ssl.ca.location" = "FILE:ca.pem",
-            "property.ssl.certificate.location" = "FILE:client.pem",
-            "property.ssl.key.location" = "FILE:client.key",
-            "property.ssl.key.password" = "ssl_passwd"
-        );  
-```
+    ```SQL
+    CREATE ROUTINE LOAD demo.kafka_job20 ON routine_test20
+            PROPERTIES
+            (
+                "format" = "json"
+            )
+            FROM KAFKA
+            (
+                "kafka_broker_list" = "192.168.100.129:9092",
+                "kafka_topic" = "routineLoad21",
+                "property.security.protocol" = "ssl",
+                "property.ssl.ca.location" = "FILE:ca.pem",
+                "property.ssl.certificate.location" = "FILE:client.pem",
+                "property.ssl.key.location" = "FILE:client.key",
+                "property.ssl.key.password" = "ssl_passwd"
+            );  
+    ```
 
-Parameter descriptions:
+2. Parameter descriptions:
 
-| Parameter                          | Description                                                  |
-|------------------------------------|--------------------------------------------------------------|
-| property.security.protocol         | The security protocol used, in this example it is SSL       |
-| property.ssl.ca.location           | The location of the CA (Certificate Authority) certificate   |
-| property.ssl.certificate.location  | The location of the Client's public key (required if client authentication is enabled on the Kafka server) |
-| property.ssl.key.location          | The location of the Client's private key (required if client authentication is enabled on the Kafka server) |
-| property.ssl.key.password          | The password for the Client's private key (required if client authentication is enabled on the Kafka server) |
+    | Parameter                          | Description                                                  |
+    |------------------------------------|--------------------------------------------------------------|
+    | property.security.protocol         | The security protocol used, in this example it is SSL       |
+    | property.ssl.ca.location           | The location of the CA (Certificate Authority) certificate   |
+    | property.ssl.certificate.location  | The location of the Client's public key (required if client authentication is enabled on the Kafka server) |
+    | property.ssl.key.location          | The location of the Client's private key (required if client authentication is enabled on the Kafka server) |
+    | property.ssl.key.password          | The password for the Client's private key (required if client authentication is enabled on the Kafka server) |
 
 **Loading Kafka Data with Kerberos Authentication**
 
-Example load command:
+1. Example load command:
 
-```SQL
-CREATE ROUTINE LOAD demo.kafka_job21 ON routine_test21
-        PROPERTIES
-        (
-            "format" = "json"
-        )
-        FROM KAFKA
-        (
-            "kafka_broker_list" = "192.168.100.129:9092",
-            "kafka_topic" = "routineLoad21",
-            "property.security.protocol" = "SASL_PLAINTEXT",
-            "property.sasl.kerberos.service.name" = "kafka",
-            "property.sasl.kerberos.keytab"="/opt/third/kafka/kerberos/kafka_client.keytab",
-            "property.sasl.kerberos.principal" = "clients/stream.dt.local@EXAMPLE.COM"
-        );  
-```
+    ```SQL
+    CREATE ROUTINE LOAD demo.kafka_job21 ON routine_test21
+            PROPERTIES
+            (
+                "format" = "json"
+            )
+            FROM KAFKA
+            (
+                "kafka_broker_list" = "192.168.100.129:9092",
+                "kafka_topic" = "routineLoad21",
+                "property.security.protocol" = "SASL_PLAINTEXT",
+                "property.sasl.kerberos.service.name" = "kafka",
+                "property.sasl.kerberos.keytab"="/opt/third/kafka/kerberos/kafka_client.keytab",
+                "property.sasl.kerberos.principal" = "clients/stream.dt.local@EXAMPLE.COM"
+            );  
+    ```
 
-Parameter descriptions:
+2. Parameter descriptions:
 
-| Parameter                           | Description                                               |
-|-------------------------------------|-----------------------------------------------------------|
-| property.security.protocol          | The security protocol used, in this example it is SASL_PLAINTEXT |
-| property.sasl.kerberos.service.name | Specifies the broker service name, default is Kafka       |
-| property.sasl.kerberos.keytab       | The location of the keytab file                           |
-| property.sasl.kerberos.principal    | Specifies the Kerberos principal                          |
+    | Parameter                           | Description                                               |
+    |-------------------------------------|-----------------------------------------------------------|
+    | property.security.protocol          | The security protocol used, in this example it is SASL_PLAINTEXT |
+    | property.sasl.kerberos.service.name | Specifies the broker service name, default is Kafka       |
+    | property.sasl.kerberos.keytab       | The location of the keytab file                           |
+    | property.sasl.kerberos.principal    | Specifies the Kerberos principal                          |
 
 **Loading Kafka Cluster with PLAIN Authentication**
 
 1. Example load command:
 
-```SQL
-CREATE ROUTINE LOAD demo.kafka_job22 ON routine_test22
-        PROPERTIES
-        (
-            "format" = "json"
-        )
-        FROM KAFKA
-        (
-            "kafka_broker_list" = "192.168.100.129:9092",
-            "kafka_topic" = "routineLoad22",
-            "property.security.protocol"="SASL_PLAINTEXT",
-            "property.sasl.mechanism"="PLAIN",
-            "property.sasl.username"="admin",
-            "property.sasl.password"="admin"
-        );  
-```
+    ```SQL
+    CREATE ROUTINE LOAD demo.kafka_job22 ON routine_test22
+            PROPERTIES
+            (
+                "format" = "json"
+            )
+            FROM KAFKA
+            (
+                "kafka_broker_list" = "192.168.100.129:9092",
+                "kafka_topic" = "routineLoad22",
+                "property.security.protocol"="SASL_PLAINTEXT",
+                "property.sasl.mechanism"="PLAIN",
+                "property.sasl.username"="admin",
+                "property.sasl.password"="admin"
+            );  
+    ```
 
-Parameter descriptions:
+2. Parameter descriptions:
 
-| Parameter                          | Description                                               |
-|------------------------------------|-----------------------------------------------------------|
-| property.security.protocol         | The security protocol used, in this example it is SASL_PLAINTEXT |
-| property.sasl.mechanism           | Specifies the SASL authentication mechanism as PLAIN      |
-| property.sasl.username            | The username for SASL                                    |
-| property.sasl.password            | The password for SASL                                    |
+    | Parameter                          | Description                                               |
+    |------------------------------------|-----------------------------------------------------------|
+    | property.security.protocol         | The security protocol used, in this example it is SASL_PLAINTEXT |
+    | property.sasl.mechanism           | Specifies the SASL authentication mechanism as PLAIN      |
+    | property.sasl.username            | The username for SASL                                    |
+    | property.sasl.password            | The password for SASL                                    |
 
 ### Single-task Loading to Multiple Tables  
 

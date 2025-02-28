@@ -53,15 +53,15 @@ INSERT INTO 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
 
 1. 创建源表
 
-    ```sql
-    CREATE TABLE testdb.test_table(
-        user_id            BIGINT       NOT NULL COMMENT "user id",
-        name               VARCHAR(20)           COMMENT "name",
-        age                INT                   COMMENT "age"
-    )
-    DUPLICATE KEY(user_id)
-    DISTRIBUTED BY HASH(user_id) BUCKETS 10;
-    ```
+   ```sql
+   CREATE TABLE testdb.test_table(
+       user_id            BIGINT       NOT NULL COMMENT "user id",
+       name               VARCHAR(20)           COMMENT "name",
+       age                INT                   COMMENT "age"
+   )
+   DUPLICATE KEY(user_id)
+   DISTRIBUTED BY HASH(user_id) BUCKETS 10;
+   ```
 
 2. 使用任何方式向源表导入数据（这里以 INSERT INTO VALUES 为例）
 

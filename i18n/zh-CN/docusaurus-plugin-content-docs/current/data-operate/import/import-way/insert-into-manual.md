@@ -157,86 +157,86 @@ INSERT INTO target_table SELECT ... FROM source_table;
 
 INSERT INTO 是一个 SQL 语句，其返回结果会根据查询结果的不同，分为以下几种：
 
-**结果集为空**
+- **结果集为空**
 
-如果 INSERT INTO 中的 SELECT 语句的查询结果集为空，则返回如下：
+    如果 INSERT INTO 中的 SELECT 语句的查询结果集为空，则返回如下：
 
-```sql
-mysql> INSERT INTO tbl1 SELECT * FROM empty_tbl;
-Query OK, 0 rows affected (0.02 sec)
-```
+    ```sql
+    mysql> INSERT INTO tbl1 SELECT * FROM empty_tbl;
+    Query OK, 0 rows affected (0.02 sec)
+    ```
 
-`Query OK` 表示执行成功。`0 rows affected` 表示没有数据被导入。
+    `Query OK` 表示执行成功。`0 rows affected` 表示没有数据被导入。
 
-**结果集不为空且 INSERT 执行成功**
+- **结果集不为空且 INSERT 执行成功**
 
-```sql
-mysql> INSERT INTO tbl1 SELECT * FROM tbl2;
-Query OK, 4 rows affected (0.38 sec)
-{'label':'INSERT_8510c568-9eda-4173-9e36-6adc7d35291c', 'status':'visible', 'txnId':'4005'}
+    ```sql
+    mysql> INSERT INTO tbl1 SELECT * FROM tbl2;
+    Query OK, 4 rows affected (0.38 sec)
+    {'label':'INSERT_8510c568-9eda-4173-9e36-6adc7d35291c', 'status':'visible', 'txnId':'4005'}
 
-mysql> INSERT INTO tbl1 WITH LABEL my_label1 SELECT * FROM tbl2;
-Query OK, 4 rows affected (0.38 sec)
-{'label':'my_label1', 'status':'visible', 'txnId':'4005'}
+    mysql> INSERT INTO tbl1 WITH LABEL my_label1 SELECT * FROM tbl2;
+    Query OK, 4 rows affected (0.38 sec)
+    {'label':'my_label1', 'status':'visible', 'txnId':'4005'}
 
-mysql> INSERT INTO tbl1 SELECT * FROM tbl2;
-Query OK, 2 rows affected, 2 warnings (0.31 sec)
-{'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'visible', 'txnId':'4005'}
+    mysql> INSERT INTO tbl1 SELECT * FROM tbl2;
+    Query OK, 2 rows affected, 2 warnings (0.31 sec)
+    {'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'visible', 'txnId':'4005'}
 
-mysql> INSERT INTO tbl1 SELECT * FROM tbl2;
-Query OK, 2 rows affected, 2 warnings (0.31 sec)
-{'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'committed', 'txnId':'4005'}
-```
+    mysql> INSERT INTO tbl1 SELECT * FROM tbl2;
+    Query OK, 2 rows affected, 2 warnings (0.31 sec)
+    {'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'committed', 'txnId':'4005'}
+    ```
 
-`Query OK` 表示执行成功。`4 rows affected` 表示总共有 4 行数据被导入。`2 warnings` 表示被过滤的行数。
+    `Query OK` 表示执行成功。`4 rows affected` 表示总共有 4 行数据被导入。`2 warnings` 表示被过滤的行数。
 
-同时会返回一个 JSON 串：
+    同时会返回一个 JSON 串：
 
-```Plain
-{'label':'my_label1', 'status':'visible', 'txnId':'4005'}
-{'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'committed', 'txnId':'4005'}
-{'label':'my_label1', 'status':'visible', 'txnId':'4005', 'err':'some other error'}
-```
+    ```Plain
+    {'label':'my_label1', 'status':'visible', 'txnId':'4005'}
+    {'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'committed', 'txnId':'4005'}
+    {'label':'my_label1', 'status':'visible', 'txnId':'4005', 'err':'some other error'}
+    ```
 
-其中，返回结果参数如下表说明：
+    其中，返回结果参数如下表说明：
 
-| 参数名称 | 说明                                                         |
-| -------- | ------------------------------------------------------------ |
-| TxnId    | 导入事务的 ID                                                |
-| Label    | 导入作业的 label，通过 INSERT INTO tbl WITH LABEL label ... 指定 |
-| Status   | 表示导入数据是否可见。如果可见，显示 `visible`，如果不可见，显示 `committed`<p>- `visible`：表示导入成功，数据可见</p> <p>- `committed`：该状态也表示导入已经完成，只是数据可能会延迟可见，无需重试</p> <p>- Label Already Exists：Label 重复，需要更换 label</p> <p>- Fail：导入失败</p> |
-| Err      | 导入错误信息                                                 |
+    | 参数名称 | 说明                                                         |
+    | -------- | ------------------------------------------------------------ |
+    | TxnId    | 导入事务的 ID                                                |
+    | Label    | 导入作业的 label，通过 INSERT INTO tbl WITH LABEL label ... 指定 |
+    | Status   | 表示导入数据是否可见。如果可见，显示 `visible`，如果不可见，显示 `committed`<p>- `visible`：表示导入成功，数据可见</p> <p>- `committed`：该状态也表示导入已经完成，只是数据可能会延迟可见，无需重试</p> <p>- Label Already Exists：Label 重复，需要更换 label</p> <p>- Fail：导入失败</p> |
+    | Err      | 导入错误信息                                                 |
 
-当需要查看被过滤的行时，用户可以通过[ SHOW LOAD ](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-LOAD)语句
+    当需要查看被过滤的行时，用户可以通过[ SHOW LOAD ](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-LOAD)语句
 
-```sql
-SHOW LOAD WHERE label="xxx";
-```
+    ```sql
+    SHOW LOAD WHERE label="xxx";
+    ```
 
-返回结果中的 URL 可以用于查询错误的数据，具体见后面查看错误行小结。数据不可见是一个临时状态，这批数据最终是一定可见的。可以通过[ SHOW TRANSACTION ](../../../sql-manual/sql-statements/transaction/SHOW-TRANSACTION)语句查看这批数据的可见状态：
+    返回结果中的 URL 可以用于查询错误的数据，具体见后面查看错误行小结。数据不可见是一个临时状态，这批数据最终是一定可见的。可以通过[ SHOW TRANSACTION ](../../../sql-manual/sql-statements/transaction/SHOW-TRANSACTION)语句查看这批数据的可见状态：
 
-```sql
-SHOW TRANSACTION WHERE id=4005;
-```
+    ```sql
+    SHOW TRANSACTION WHERE id=4005;
+    ```
 
-返回结果中的 `TransactionStatus` 列如果为 `visible`，则表述数据可见。
+    返回结果中的 `TransactionStatus` 列如果为 `visible`，则表述数据可见。
 
-```sql
-{'label':'my_label1', 'status':'visible', 'txnId':'4005'}
-{'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'committed', 'txnId':'4005'}
-{'label':'my_label1', 'status':'visible', 'txnId':'4005', 'err':'some other error'}
-```
+    ```sql
+    {'label':'my_label1', 'status':'visible', 'txnId':'4005'}
+    {'label':'INSERT_f0747f0e-7a35-46e2-affa-13a235f4020d', 'status':'committed', 'txnId':'4005'}
+    {'label':'my_label1', 'status':'visible', 'txnId':'4005', 'err':'some other error'}
+    ```
 
-**结果集不为空但 INSERT 执行失败**
+- **结果集不为空但 INSERT 执行失败**
 
-执行失败表示没有任何数据被成功导入，并返回如下：
+    执行失败表示没有任何数据被成功导入，并返回如下：
 
-```sql
-mysql> INSERT INTO tbl1 SELECT * FROM tbl2 WHERE k1 = "a";
-ERROR 1064 (HY000): all partitions have no load data. url: http://10.74.167.16:8042/api/_load_error_log?file=_shard_2/error_loginsert_stmt_ba8bb9e158e4879-ae8de8507c0bf8a2_ba8bb9e158e4879_ae8de8507c0bf8a2
-```
+    ```sql
+    mysql> INSERT INTO tbl1 SELECT * FROM tbl2 WHERE k1 = "a";
+    ERROR 1064 (HY000): all partitions have no load data. url: http://10.74.167.16:8042/api/_load_error_log?file=_shard_2/error_loginsert_stmt_ba8bb9e158e4879-ae8de8507c0bf8a2_ba8bb9e158e4879_ae8de8507c0bf8a2
+    ```
 
-其中 `ERROR 1064 (HY000): all partitions have no load data` 显示失败原因。后面的 url 可以用于查询错误的数据，具体见后面 查看错误行 小结。
+    其中 `ERROR 1064 (HY000): all partitions have no load data` 显示失败原因。后面的 url 可以用于查询错误的数据，具体见后面 查看错误行 小结。
 
 ## 导入最佳实践
 

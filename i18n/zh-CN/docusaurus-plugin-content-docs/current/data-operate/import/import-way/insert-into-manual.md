@@ -53,55 +53,55 @@ INSERT INTO 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
 
 1. 创建源表
 
-```sql
-CREATE TABLE testdb.test_table(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-DUPLICATE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 10;
-```
+    ```sql
+    CREATE TABLE testdb.test_table(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    DUPLICATE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 10;
+    ```
 
 2. 使用任何方式向源表导入数据（这里以 INSERT INTO VALUES 为例）
 
-```sql
-INSERT INTO testdb.test_table (user_id, name, age)
-VALUES (1, "Emily", 25),
-       (2, "Benjamin", 35),
-       (3, "Olivia", 28),
-       (4, "Alexander", 60),
-       (5, "Ava", 17);
-```
+    ```sql
+    INSERT INTO testdb.test_table (user_id, name, age)
+    VALUES (1, "Emily", 25),
+        (2, "Benjamin", 35),
+        (3, "Olivia", 28),
+        (4, "Alexander", 60),
+        (5, "Ava", 17);
+    ```
 
 3. 在上述操作的基础上，创建一个新表作为目标表（其 schema 与源表相同）
 
-```sql
-CREATE TABLE testdb.test_table2 LIKE testdb.test_table;
-```
+    ```sql
+    CREATE TABLE testdb.test_table2 LIKE testdb.test_table;
+    ```
 
 4. 使用 INSERT INTO SELECT 导入到新表
 
-```sql
-INSERT INTO testdb.test_table2
-SELECT * FROM testdb.test_table WHERE age < 30;
-Query OK, 3 rows affected (0.544 sec)
-{'label':'label_9c2bae970023407d_b2c5b78b368e78a7', 'status':'VISIBLE', 'txnId':'9084'}
-```
+    ```sql
+    INSERT INTO testdb.test_table2
+    SELECT * FROM testdb.test_table WHERE age < 30;
+    Query OK, 3 rows affected (0.544 sec)
+    {'label':'label_9c2bae970023407d_b2c5b78b368e78a7', 'status':'VISIBLE', 'txnId':'9084'}
+    ```
 
 5. 查看导入数据
 
-```sql
-MySQL> SELECT * FROM testdb.test_table2 ORDER BY age;
-+---------+--------+------+
-| user_id | name   | age  |
-+---------+--------+------+
-|       5 | Ava    |   17 |
-|       1 | Emily  |   25 |
-|       3 | Olivia |   28 |
-+---------+--------+------+
-3 rows in set (0.02 sec)
-```
+    ```sql
+    MySQL> SELECT * FROM testdb.test_table2 ORDER BY age;
+    +---------+--------+------+
+    | user_id | name   | age  |
+    +---------+--------+------+
+    |       5 | Ava    |   17 |
+    |       1 | Emily  |   25 |
+    |       3 | Olivia |   28 |
+    +---------+--------+------+
+    3 rows in set (0.02 sec)
+    ```
 
 6. 可以使用 [JOB](../../../admin-manual/workload-management/job-scheduler) 异步执行 INSERT。
 

@@ -50,55 +50,55 @@ INSERT INTO requires INSERT permissions on the target table. You can grant permi
 
 1. Create a source table
 
-```SQL
-CREATE TABLE testdb.test_table(
-    user_id            BIGINT       NOT NULL COMMENT "User ID",
-    name               VARCHAR(20)           COMMENT "User name",
-    age                INT                   COMMENT "User age"
-)
-DUPLICATE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 10;
-```
+    ```SQL
+    CREATE TABLE testdb.test_table(
+        user_id            BIGINT       NOT NULL COMMENT "User ID",
+        name               VARCHAR(20)           COMMENT "User name",
+        age                INT                   COMMENT "User age"
+    )
+    DUPLICATE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 10;
+    ```
 
 2. Import data into the source table using any load method. (Here we use `INSERT INTO VALUES` for example).
 
-```SQL
-INSERT INTO testdb.test_table (user_id, name, age)
-VALUES (1, "Emily", 25),
-       (2, "Benjamin", 35),
-       (3, "Olivia", 28),
-       (4, "Alexander", 60),
-       (5, "Ava", 17);
-```
+    ```SQL
+    INSERT INTO testdb.test_table (user_id, name, age)
+    VALUES (1, "Emily", 25),
+        (2, "Benjamin", 35),
+        (3, "Olivia", 28),
+        (4, "Alexander", 60),
+        (5, "Ava", 17);
+    ```
 
 3. Building upon the above operations, create a new table as the target table (with the same schema as the source table).
 
-```SQL
-CREATE TABLE testdb.test_table2 LIKE testdb.test_table;
-```
+    ```SQL
+    CREATE TABLE testdb.test_table2 LIKE testdb.test_table;
+    ```
 
 4. Ingest data into the new table using `INSERT INTO SELECT`.
 
-```SQL
-INSERT INTO testdb.test_table2
-SELECT * FROM testdb.test_table WHERE age < 30;
-Query OK, 3 rows affected (0.544 sec)
-{'label':'label_9c2bae970023407d_b2c5b78b368e78a7', 'status':'VISIBLE', 'txnId':'9084'}
-```
+    ```SQL
+    INSERT INTO testdb.test_table2
+    SELECT * FROM testdb.test_table WHERE age < 30;
+    Query OK, 3 rows affected (0.544 sec)
+    {'label':'label_9c2bae970023407d_b2c5b78b368e78a7', 'status':'VISIBLE', 'txnId':'9084'}
+    ```
 
 5. View imported data.
 
-```SQL
-MySQL> SELECT * FROM testdb.test_table2 ORDER BY age;
-+---------+--------+------+
-| user_id | name   | age  |
-+---------+--------+------+
-|       5 | Ava    |   17 |
-|       1 | Emily  |   25 |
-|       3 | Olivia |   28 |
-+---------+--------+------+
-3 rows in set (0.02 sec)
-```
+    ```SQL
+    MySQL> SELECT * FROM testdb.test_table2 ORDER BY age;
+    +---------+--------+------+
+    | user_id | name   | age  |
+    +---------+--------+------+
+    |       5 | Ava    |   17 |
+    |       1 | Emily  |   25 |
+    |       3 | Olivia |   28 |
+    +---------+--------+------+
+    3 rows in set (0.02 sec)
+    ```
 
 6. You can use [JOB](../../../admin-manual/workload-management/job-scheduler) make the INSERT operation execute asynchronously.
 

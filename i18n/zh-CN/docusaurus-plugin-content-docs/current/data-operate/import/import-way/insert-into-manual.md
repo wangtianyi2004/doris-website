@@ -295,35 +295,31 @@ CREATE CATALOG hive PROPERTIES (
 
 1. 创建一张 Doris 的导入目标表
 
-```sql
-CREATE TABLE `target_tbl` (
-  `k1` decimal(9, 3) NOT NULL COMMENT "",
-  `k2` char(10) NOT NULL COMMENT "",
-  `k3` datetime NOT NULL COMMENT "",
-  `k5` varchar(20) NOT NULL COMMENT "",
-  `k6` double NOT NULL COMMENT ""
-)
-COMMENT "Doris Table"
-DISTRIBUTED BY HASH(k1) BUCKETS 2
-PROPERTIES (
-    "replication_num" = "1"
-);
-```
+    ```sql
+    CREATE TABLE `target_tbl` (
+    `k1` decimal(9, 3) NOT NULL COMMENT "",
+    `k2` char(10) NOT NULL COMMENT "",
+    `k3` datetime NOT NULL COMMENT "",
+    `k5` varchar(20) NOT NULL COMMENT "",
+    `k6` double NOT NULL COMMENT ""
+    )
+    COMMENT "Doris Table"
+    DISTRIBUTED BY HASH(k1) BUCKETS 2
+    PROPERTIES (
+        "replication_num" = "1"
+    );
+    ```
 
 2. 关于创建 Doris 表的详细说明，请参阅 [CREATE-TABLE](../../../sql-manual/sql-statements/table-and-view/table/CREATE-TABLE) 语法帮助。
 
 3. 导入数据 (从 hive.db1.source_tbl 表导入到 target_tbl 表)
 
-```sql
-INSERT INTO target_tbl SELECT k1,k2,k3 FROM  hive.db1.source_tbl limit 100;
-```
+    ```sql
+    INSERT INTO target_tbl SELECT k1,k2,k3 FROM  hive.db1.source_tbl limit 100;
+    ```
 
-INSERT 命令是同步命令，返回成功，即表示导入成功。
+    INSERT 命令是同步命令，返回成功，即表示导入成功。
 
-
-### 注意事项
-
-- 必须保证外部数据源与 Doris 集群是可以互通，包括 BE 节点和外部数据源的网络是互通的。
 
 ## 通过 TVF 导入数据
 

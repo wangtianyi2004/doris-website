@@ -86,102 +86,102 @@ Routine Load 的导入具体流程如下图所示：
 
 1. 导入数据样本
 
-在 Kafka 中，有以下样本数据
+    在 Kafka 中，有以下样本数据
 
-```sql
-kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-routine-load-csv --from-beginning
-1,Emily,25
-2,Benjamin,35
-3,Olivia,28
-4,Alexander,60
-5,Ava,17
-6,William,69
-7,Sophia,32
-8,James,64
-9,Emma,37
-10,Liam,64
-```
+    ```sql
+    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-routine-load-csv --from-beginning
+    1,Emily,25
+    2,Benjamin,35
+    3,Olivia,28
+    4,Alexander,60
+    5,Ava,17
+    6,William,69
+    7,Sophia,32
+    8,James,64
+    9,Emma,37
+    10,Liam,64
+    ```
 
 2. 创建需要导入的表
 
-在 Doris 中，创建被导入的表，具体语法如下
+    在 Doris 中，创建被导入的表，具体语法如下
 
-```sql
-CREATE TABLE testdb.test_routineload_tbl(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-DUPLICATE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 10;
-```
+    ```sql
+    CREATE TABLE testdb.test_routineload_tbl(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    DUPLICATE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 10;
+    ```
 
 3. 创建 Routine Load 导入作业
 
-在 Doris 中，使用 CREATE ROUTINE LOAD 命令，创建导入作业
+    在 Doris 中，使用 CREATE ROUTINE LOAD 命令，创建导入作业
 
-```sql
-CREATE ROUTINE LOAD testdb.example_routine_load_csv ON test_routineload_tbl
-COLUMNS TERMINATED BY ",",
-COLUMNS(user_id, name, age)
-FROM KAFKA(
-    "kafka_broker_list" = "192.168.88.62:9092",
-    "kafka_topic" = "test-routine-load-csv",
-    "property.kafka_default_offsets" = "OFFSET_BEGINNING"
-);
-```
+    ```sql
+    CREATE ROUTINE LOAD testdb.example_routine_load_csv ON test_routineload_tbl
+    COLUMNS TERMINATED BY ",",
+    COLUMNS(user_id, name, age)
+    FROM KAFKA(
+        "kafka_broker_list" = "192.168.88.62:9092",
+        "kafka_topic" = "test-routine-load-csv",
+        "property.kafka_default_offsets" = "OFFSET_BEGINNING"
+    );
+    ```
 
 **导入 JSON 数据**
 
 1. 导入样本数据
 
-在 Kafka 中，有以下样本数据
+    在 Kafka 中，有以下样本数据
 
-```sql
-kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-routine-load-json --from-beginning
-{"user_id":1,"name":"Emily","age":25}
-{"user_id":2,"name":"Benjamin","age":35}
-{"user_id":3,"name":"Olivia","age":28}
-{"user_id":4,"name":"Alexander","age":60}
-{"user_id":5,"name":"Ava","age":17}
-{"user_id":6,"name":"William","age":69}
-{"user_id":7,"name":"Sophia","age":32}
-{"user_id":8,"name":"James","age":64}
-{"user_id":9,"name":"Emma","age":37}
-{"user_id":10,"name":"Liam","age":64}
-```
+    ```sql
+    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-routine-load-json --from-beginning
+    {"user_id":1,"name":"Emily","age":25}
+    {"user_id":2,"name":"Benjamin","age":35}
+    {"user_id":3,"name":"Olivia","age":28}
+    {"user_id":4,"name":"Alexander","age":60}
+    {"user_id":5,"name":"Ava","age":17}
+    {"user_id":6,"name":"William","age":69}
+    {"user_id":7,"name":"Sophia","age":32}
+    {"user_id":8,"name":"James","age":64}
+    {"user_id":9,"name":"Emma","age":37}
+    {"user_id":10,"name":"Liam","age":64}
+    ```
 
 2. 创建需要导入的表
 
-在 Doris 中，创建被导入的表，具体语法如下
+    在 Doris 中，创建被导入的表，具体语法如下
 
-```sql
-CREATE TABLE testdb.test_routineload_tbl(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-DUPLICATE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 10;
-```
+    ```sql
+    CREATE TABLE testdb.test_routineload_tbl(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    DUPLICATE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 10;
+    ```
 
 3. 创建 Routine Load 导入作业
 
-在 Doris 中，使用 CREATE ROUTINE LOAD 命令，创建导入作业
+    在 Doris 中，使用 CREATE ROUTINE LOAD 命令，创建导入作业
 
-```sql
-CREATE ROUTINE LOAD testdb.example_routine_load_json ON test_routineload_tbl
-COLUMNS(user_id,name,age)
-PROPERTIES(
-    "format"="json",
-    "jsonpaths"="[\"$.user_id\",\"$.name\",\"$.age\"]"
-)
-FROM KAFKA(
-    "kafka_broker_list" = "192.168.88.62:9092",
-    "kafka_topic" = "test-routine-load-json",
-    "property.kafka_default_offsets" = "OFFSET_BEGINNING"
-);
-```
+    ```sql
+    CREATE ROUTINE LOAD testdb.example_routine_load_json ON test_routineload_tbl
+    COLUMNS(user_id,name,age)
+    PROPERTIES(
+        "format"="json",
+        "jsonpaths"="[\"$.user_id\",\"$.name\",\"$.age\"]"
+    )
+    FROM KAFKA(
+        "kafka_broker_list" = "192.168.88.62:9092",
+        "kafka_topic" = "test-routine-load-json",
+        "property.kafka_default_offsets" = "OFFSET_BEGINNING"
+    );
+    ```
 
 ### 查看导入状态
 
@@ -191,7 +191,7 @@ FROM KAFKA(
 
 - 导入任务：主要用于查看导入的子任务状态、消费进度以及下发的 BE 节点。
 
-**01 查看导入运行任务**
+**查看导入运行任务**
 
 可以通过 [SHOW ROUTINE LOAD](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-ROUTINE-LOAD) 命令查看导入作业情况。SHOW ROUTINE LOAD 描述了当前作业的基本情况，如导入目标表、导入延迟状态、导入配置信息、导入错误信息等。
 
@@ -225,7 +225,7 @@ ReasonOfStateChanged:
 1 row in set (0.00 sec)
 ```
 
-**02 查看导入运行作业**
+**查看导入运行作业**
 
 可以通过 [SHOW ROUTINE LOAD TASK](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-ROUTINE-LOAD-TASK) 命令查看导入子任务情况。SHOW ROUTINE LOAD TASK 描述了当前作业下的子任务信息，如子任务状态，下发 BE id 等信息。
 
@@ -319,29 +319,6 @@ FROM KAFKA [data_source_properties]
 | data_source_properties | 用于描述 Kafka 数据源属性。                                  |
 | comment                | 用于描述导入作业的备注信息。                                 |
 
-### 导入参数说明
-
-**01 FE 配置参数**
-
-| 参数名称                          | 默认值 | 动态配置 | FE Master 独有配置 | 参数描述                                                                                     |
-|-----------------------------------|--------|----------|---------------------|----------------------------------------------------------------------------------------------|
-| max_routine_load_task_concurrent_num | 256    | 是       | 是                  | 限制 Routine Load 的导入作业最大子并发数量。建议维持在默认值。如果设置过大，可能导致并发任务数过多，占用集群资源。 |
-| max_routine_load_task_num_per_be  | 1024   | 是       | 是                  | 每个 BE 限制的最大并发 Routine Load 任务数。`max_routine_load_task_num_per_be` 应该小于 `routine_load_thread_pool_size`。 |
-| max_routine_load_job_num           | 100    | 是       | 是                  | 限制最大 Routine Load 作业数，包括 NEED_SCHEDULED，RUNNING，PAUSE。                        |
-| max_tolerable_backend_down_num     | 0      | 是       | 是                  | 只要有一个 BE 宕机，Routine Load 就无法自动恢复。在满足某些条件时，Doris 可以将 PAUSED 的任务重新调度，转换为 RUNNING 状态。该参数为 0 表示只有所有 BE 节点都处于 alive 状态时允许重新调度。 |
-| period_of_auto_resume_min          | 5（分钟） | 是       | 是                  | 自动恢复 Routine Load 的周期。                                                               |
-
-**02 BE 配置参数**
-
-
-| 参数名称                     | 默认值 | 动态配置 | 描述                                                                                                           |
-|------------------------------|--------|----------|----------------------------------------------------------------------------------------------------------------|
-| max_consumer_num_per_group   | 3      | 是       | 一个子任务最多生成几个 consumer 消费
-
-**03 导入配置参数**
-
-在创建 Routine Load 作业时，可以通过 CREATE ROUTINE LOAD 命令指定不同模块的导入配置参数。
-
 **tbl_name 子句**
 
 指定需要导入的表的名称，可选参数。
@@ -432,6 +409,23 @@ data_source_properties 子句具体参数选项如下：
 | property          | 指定自定义 kafka 参数。功能等同于 kafka shell 中 "--property" 参数。当参数的 Value 为一个文件时，需要在 Value 前加上关键词："FILE:"。创建文件可以参考 [CREATE FILE](../../../sql-manual/sql-statements/security/CREATE-FILE) 命令文档。更多支持的自定义参数，可以参考 librdkafka 的官方 [CONFIGURATION](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md) 文档中，client 端的配置项。如：`"property.client.id" = "12345"``"property.group.id" = "group_id_0"``"property.ssl.ca.location" = "FILE:ca.pem"` |
 
 通过配置 data_source_properties 中的 kafka property 参数，可以配置安全访问选项。目前 Doris 支持多种 Kafka 安全协议，如 plaintext（默认）、SSL、PLAIN、Kerberos 等。
+
+
+### 导入参数说明
+
+**FE 与 BE 配置参数**
+
+| 参数名称                          | 默认值 | 动态配置 | 组件 | 参数描述                                                                                     |
+|-----------------------------------|--------|----------|-------|----------------------------------------------------------------------------------------------|
+| max_routine_load_task_concurrent_num | 256    | 是       | FE    | 限制 Routine Load 的导入作业最大子并发数量。建议维持在默认值。如果设置过大，可能导致并发任务数过多，占用集群资源。 |
+| max_routine_load_task_num_per_be  | 1024   | 是       | FE    | 每个 BE 限制的最大并发 Routine Load 任务数。`max_routine_load_task_num_per_be` 应该小于 `routine_load_thread_pool_size`。 |
+| max_routine_load_job_num           | 100    | 是       | FE    | 限制最大 Routine Load 作业数，包括 NEED_SCHEDULED，RUNNING，PAUSE。                        |
+| max_tolerable_backend_down_num     | 0      | 是       | FE    | 只要有一个 BE 宕机，Routine Load 就无法自动恢复。在满足某些条件时，Doris 可以将 PAUSED 的任务重新调度，转换为 RUNNING 状态。该参数为 0 表示只有所有 BE 节点都处于 alive 状态时允许重新调度。 |
+| period_of_auto_resume_min          | 5（分钟） | 是       | FE    | 自动恢复 Routine Load 的周期。                                                               |
+| max_consumer_num_per_group   | 3      | 是       | BE    | 一个子任务最多生成几个 consumer 消费数据。                                                                 |
+
+
+
 
 ### 导入状态
 

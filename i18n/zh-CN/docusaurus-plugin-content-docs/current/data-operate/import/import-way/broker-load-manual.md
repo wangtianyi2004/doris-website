@@ -82,85 +82,85 @@ BE 在执行的过程中会从 Broker 拉取数据，在对数据转换之后将
 
 1. Doris 表权限
 
-Broker Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，可以通过 [GRANT](../../../sql-manual/sql-statements/account-management/GRANT-TO) 命令给用户授权。
+    Broker Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，可以通过 [GRANT](../../../sql-manual/sql-statements/account-management/GRANT-TO) 命令给用户授权。
 
 2. S3 认证和连接信息
 
-这里以 AWS S3 为例，从其他对象存储系统导入也可以作为参考。
+    这里以 AWS S3 为例，从其他对象存储系统导入也可以作为参考。
 
-- AK 和 SK：首先需要找到或者重新生成 AWS `Access keys`，可以在 AWS console 的 `My Security Credentials` 找到生成方式。
+    - AK 和 SK：首先需要找到或者重新生成 AWS `Access keys`，可以在 AWS console 的 `My Security Credentials` 找到生成方式。
 
-- REGION 和 ENDPOINT：REGION 可以在创建桶的时候选择也可以在桶列表中查看到。每个 REGION 的 S3 ENDPOINT 可以通过如下页面查到 [AWS 文档](https://docs.aws.amazon.com/general/latest/gr/s3.html#s3_region)。
+    - REGION 和 ENDPOINT：REGION 可以在创建桶的时候选择也可以在桶列表中查看到。每个 REGION 的 S3 ENDPOINT 可以通过如下页面查到 [AWS 文档](https://docs.aws.amazon.com/general/latest/gr/s3.html#s3_region)。
 
 ### 创建导入作业
 
 1. 创建 CSV 文件 brokerload_example.csv 文件存储在 S3 上，其内容如下：
 
-```
-1,Emily,25
-2,Benjamin,35
-3,Olivia,28
-4,Alexander,60
-5,Ava,17
-6,William,69
-7,Sophia,32
-8,James,64
-9,Emma,37
-10,Liam,64
-```
+    ```
+    1,Emily,25
+    2,Benjamin,35
+    3,Olivia,28
+    4,Alexander,60
+    5,Ava,17
+    6,William,69
+    7,Sophia,32
+    8,James,64
+    9,Emma,37
+    10,Liam,64
+    ```
 
 2. 创建导入 Doris 表
 
-在 Doris 中创建被导入的表，具体语法如下：
+    在 Doris 中创建被导入的表，具体语法如下：
 
-```sql
-CREATE TABLE testdb.test_brokerload(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-DUPLICATE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 10;
-```
+    ```sql
+    CREATE TABLE testdb.test_brokerload(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    DUPLICATE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 10;
+    ```
 
 3. 使用 Broker Load 从 S3 导入数据。其中 bucket 名称和 S3 认证信息要根据实际填写：
 
-```sql
-    LOAD LABEL broker_load_2022_04_01
-    (
-        DATA INFILE("s3://your_bucket_name/brokerload_example.csv")
-        INTO TABLE test_brokerload
-        COLUMNS TERMINATED BY ","
-        FORMAT AS "CSV"
-        (user_id, name, age)
-    )
-    WITH S3
-    (
-        "provider" = "S3",
-        "AWS_ENDPOINT" = "s3.us-west-2.amazonaws.com",
-        "AWS_ACCESS_KEY" = "<your-ak>",
-        "AWS_SECRET_KEY"="<your-sk>",
-        "AWS_REGION" = "us-west-2",
-        "compress_type" = "PLAIN"
-    )
-    PROPERTIES
-    (
-        "timeout" = "3600"
-    );
-```
+    ```sql
+      LOAD LABEL broker_load_2022_04_01
+      (
+          DATA INFILE("s3://your_bucket_name/brokerload_example.csv")
+          INTO TABLE test_brokerload
+          COLUMNS TERMINATED BY ","
+          FORMAT AS "CSV"
+          (user_id, name, age)
+      )
+      WITH S3
+      (
+          "provider" = "S3",
+          "AWS_ENDPOINT" = "s3.us-west-2.amazonaws.com",
+          "AWS_ACCESS_KEY" = "<your-ak>",
+          "AWS_SECRET_KEY"="<your-sk>",
+          "AWS_REGION" = "us-west-2",
+          "compress_type" = "PLAIN"
+      )
+      PROPERTIES
+      (
+          "timeout" = "3600"
+      );
+  ```
 
-其中 `provider` 字段需要根据实际的对象存储服务商填写。
-Doris 支持的 provider 列表：
+  其中 `provider` 字段需要根据实际的对象存储服务商填写。
+  Doris 支持的 provider 列表：
 
-- "S3" (亚马逊 AWS)
-- "AZURE" (微软 Azure)
-- "GCP" (谷歌 GCP)
-- "OSS" (阿里云)
-- "COS" (腾讯云)
-- "OBS" (华为云)
-- "BOS" (百度云)
+  - "S3" (亚马逊 AWS)
+  - "AZURE" (微软 Azure)
+  - "GCP" (谷歌 GCP)
+  - "OSS" (阿里云)
+  - "COS" (腾讯云)
+  - "OBS" (华为云)
+  - "BOS" (百度云)
 
-如不在列表中 (例如 MinIO)，可以尝试使用 "S3" (兼容 AWS 模式)
+  如不在列表中 (例如 MinIO)，可以尝试使用 "S3" (兼容 AWS 模式)
 
 ### 查看导入作业
 
@@ -267,136 +267,138 @@ WITH [S3|HDFS|BROKER broker_name]
 
 ### 常见报错
 
-**1. 导入报错：`Scan bytes per broker scanner exceed limit:xxx`**
+1. **导入报错：`Scan bytes per broker scanner exceed limit:xxx`**
 
-请参考文档中最佳实践部分，修改 FE 配置项 `max_bytes_per_broker_scanner` 和 `max_broker_concurrency`
+    请参考文档中最佳实践部分，修改 FE 配置项 `max_bytes_per_broker_scanner` 和 `max_broker_concurrency`
 
-**2. 导入报错：`failed to send batch` 或 `TabletWriter add batch with unknown id`**
+2. **导入报错：`failed to send batch` 或 `TabletWriter add batch with unknown id`**
 
-适当修改 `query_timeout` 和 `streaming_load_rpc_max_alive_time_sec`。
+    适当修改 `query_timeout` 和 `streaming_load_rpc_max_alive_time_sec`。
 
-**3. 导入报错：`LOAD_RUN_FAIL; msg:Invalid Column Name:xxx`**
+3. **导入报错：`LOAD_RUN_FAIL; msg:Invalid Column Name:xxx`**
 
-如果是 PARQUET 或者 ORC 格式的数据，则文件头的列名需要与 Doris 表中的列名保持一致，如：
+    如果是 PARQUET 或者 ORC 格式的数据，则文件头的列名需要与 Doris 表中的列名保持一致，如：
 
-```sql
-(tmp_c1,tmp_c2)
-SET
-(
-    id=tmp_c2,
-    name=tmp_c1
-)
-```
+    ```sql
+    (tmp_c1,tmp_c2)
+    SET
+    (
+        id=tmp_c2,
+        name=tmp_c1
+    )
+    ```
 
-代表获取在 parquet 或 orc 中以 (tmp_c1, tmp_c2) 为列名的列，映射到 doris 表中的 (id, name) 列。如果没有设置 set, 则以 column 中的列作为映射。
+    代表获取在 parquet 或 orc 中以 (tmp_c1, tmp_c2) 为列名的列，映射到 doris 表中的 (id, name) 列。如果没有设置 set, 则以 column 中的列作为映射。
 
-注：如果使用某些 hive 版本直接生成的 orc 文件，orc 文件中的表头并非 hive meta 数据，而是（_col0, _col1, _col2, ...）, 可能导致 Invalid Column Name 错误，那么则需要使用 set 进行映射
+    :::Tip 提示
+    如果使用某些 hive 版本直接生成的 orc 文件，orc 文件中的表头并非 hive meta 数据，而是（_col0, _col1, _col2, ...）, 可能导致 Invalid Column Name 错误，那么则需要使用 set 进行映射。
+    :::
 
-**4. 导入报错：`Failed to get S3 FileSystem for bucket is null/empty`**
+4. **导入报错：`Failed to get S3 FileSystem for bucket is null/empty`**
 
-Bucket 信息填写不正确或者不存在。或者 bucket 的格式不受支持。使用 GCS 创建带`_`的桶名时，比如：`s3://gs_bucket/load_tbl`，S3 Client 访问 GCS 会报错，建议创建 bucket 路径时不使用`_`。
+    Bucket 信息填写不正确或者不存在。或者 bucket 的格式不受支持。使用 GCS 创建带`_`的桶名时，比如：`s3://gs_bucket/load_tbl`，S3 Client 访问 GCS 会报错，建议创建 bucket 路径时不使用`_`。
 
-**5. 导入超时**
+5. **导入超时**
 
-导入的 timeout 默认超时时间为 4 小时。如果超时，不推荐用户将导入最大超时时间直接改大来解决问题。单个导入时间如果超过默认的导入超时时间 4 小时，最好是通过切分待导入文件并且分多次导入来解决问题。因为超时时间设置过大，那么单次导入失败后重试的时间成本很高。
+    导入的 timeout 默认超时时间为 4 小时。如果超时，不推荐用户将导入最大超时时间直接改大来解决问题。单个导入时间如果超过默认的导入超时时间 4 小时，最好是通过切分待导入文件并且分多次导入来解决问题。因为超时时间设置过大，那么单次导入失败后重试的时间成本很高。
 
-可以通过如下公式计算出 Doris 集群期望最大导入文件数据量：
+    可以通过如下公式计算出 Doris 集群期望最大导入文件数据量：
 
-```Plain
-期望最大导入文件数据量 = 14400s * 10M/s * BE 个数
-比如：集群的 BE 个数为 10个
-期望最大导入文件数据量 = 14400s * 10M/s * 10 = 1440000M ≈ 1440G
+    `期望最大导入文件数据量 = 14400s * 10M/s * BE 个数`
+      
+    比如：集群的 BE 个数为 10 个，期望最大导入文件数据量 = 14400s * 10M/s * 10 = 1440000M ≈ 1440G
 
-注意：一般用户的环境可能达不到 10M/s 的速度，所以建议超过 500G 的文件都进行文件切分，再导入。
-```
+    :::Tip
+
+    一般用户的环境可能达不到 10M/s 的速度，所以建议超过 500G 的文件都进行文件切分，再导入。
+
+    :::
 
 ### S3 Load URL 访问方式
 
-- S3 SDK 默认使用 virtual-hosted-style 方式。但某些对象存储系统可能没开启或没支持 virtual-hosted-style 方式的访问，此时我们可以添加 `use_path_style` 参数来强制使用 path-style 方式：
+S3 SDK 默认使用 virtual-hosted-style 方式。但某些对象存储系统可能没开启或没支持 virtual-hosted-style 方式的访问，此时我们可以添加 `use_path_style` 参数来强制使用 path-style 方式：
 
-  ```sql
-    WITH S3
-    (
-          "AWS_ENDPOINT" = "AWS_ENDPOINT",
-          "AWS_ACCESS_KEY" = "AWS_ACCESS_KEY",
-          "AWS_SECRET_KEY"="AWS_SECRET_KEY",
-          "AWS_REGION" = "AWS_REGION",
-          "use_path_style" = "true"
-    )
-  ```
+```sql
+WITH S3 (
+      "AWS_ENDPOINT" = "AWS_ENDPOINT",
+      "AWS_ACCESS_KEY" = "AWS_ACCESS_KEY",
+      "AWS_SECRET_KEY"="AWS_SECRET_KEY",
+      "AWS_REGION" = "AWS_REGION",
+      "use_path_style" = "true"
+)
+```
 
 ### S3 Load 临时密钥
 
-- 支持使用临时密钥 (TOKEN) 访问所有支持 S3 协议的对象存储，用法如下：
+支持使用临时密钥 (TOKEN) 访问所有支持 S3 协议的对象存储，用法如下：
 
-  ```sql
-    WITH S3
-    (
-        "AWS_ENDPOINT" = "AWS_ENDPOINT",
-        "AWS_ACCESS_KEY" = "AWS_TEMP_ACCESS_KEY",
-        "AWS_SECRET_KEY" = "AWS_TEMP_SECRET_KEY",
-        "AWS_TOKEN" = "AWS_TEMP_TOKEN",
-        "AWS_REGION" = "AWS_REGION"
-    )
-  ```
+```sql
+WITH S3 (
+    "AWS_ENDPOINT" = "AWS_ENDPOINT",
+    "AWS_ACCESS_KEY" = "AWS_TEMP_ACCESS_KEY",
+    "AWS_SECRET_KEY" = "AWS_TEMP_SECRET_KEY",
+    "AWS_TOKEN" = "AWS_TEMP_TOKEN",
+    "AWS_REGION" = "AWS_REGION"
+)
+```
 
 ### HDFS 认证方式
 
 1. 简单认证
 
-简单认证即 Hadoop 配置 `hadoop.security.authentication` 为 `simple`。
+    简单认证即 Hadoop 配置 `hadoop.security.authentication` 为 `simple`。
 
-```Plain
-(
-    "username" = "user",
-    "password" = ""
-);
-```
+    ```Plain
+    (
+        "username" = "user",
+        "password" = ""
+    );
+    ```
 
-username 配置为要访问的用户，密码置空即可。
+    username 配置为要访问的用户，密码置空即可。
 
 2. Kerberos 认证
 
-该认证方式需提供以下信息：
+    该认证方式需提供以下信息：
 
-- `hadoop.security.authentication`：指定认证方式为 Kerberos。
+    - `hadoop.security.authentication`：指定认证方式为 Kerberos。
 
-- `hadoop.kerberos.principal`：指定 Kerberos 的 principal。
+    - `hadoop.kerberos.principal`：指定 Kerberos 的 principal。
 
-- `hadoop.kerberos.keytab`：指定 Kerberos 的 keytab 文件路径。该文件必须为 Broker 进程所在服务器上的文件的绝对路径。并且可以被 Broker 进程访问。
+    - `hadoop.kerberos.keytab`：指定 Kerberos 的 keytab 文件路径。该文件必须为 Broker 进程所在服务器上的文件的绝对路径。并且可以被 Broker 进程访问。
 
-- `kerberos_keytab_content`：指定 Kerberos 中 keytab 文件内容经过 base64 编码之后的内容。这个跟 `kerberos_keytab` 配置二选一即可。
+    - `kerberos_keytab_content`：指定 Kerberos 中 keytab 文件内容经过 base64 编码之后的内容。这个跟 `kerberos_keytab` 配置二选一即可。
 
-示例如下：
+    示例如下：
 
-```Plain
-(
-    "hadoop.security.authentication" = "kerberos",
-    "hadoop.kerberos.principal" = "doris@YOUR.COM",
-    "hadoop.kerberos.keytab" = "/home/doris/my.keytab"
-)
-(
-    "hadoop.security.authentication" = "kerberos",
-    "hadoop.kerberos.principal" = "doris@YOUR.COM",
-    "kerberos_keytab_content" = "ASDOWHDLAWIDJHWLDKSALDJSDIWALD"
-)
-```
+    ```Plain
+    (
+        "hadoop.security.authentication" = "kerberos",
+        "hadoop.kerberos.principal" = "doris@YOUR.COM",
+        "hadoop.kerberos.keytab" = "/home/doris/my.keytab"
+    )
+    (
+        "hadoop.security.authentication" = "kerberos",
+        "hadoop.kerberos.principal" = "doris@YOUR.COM",
+        "kerberos_keytab_content" = "ASDOWHDLAWIDJHWLDKSALDJSDIWALD"
+    )
+    ```
 
-采用 Kerberos 认证方式，需要 [krb5.conf (opens new window)](https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html) 文件，krb5.conf 文件包含 Kerberos 的配置信息，通常，应该将 krb5.conf 文件安装在目录/etc 中。可以通过设置环境变量 KRB5_CONFIG 覆盖默认位置。krb5.conf 文件的内容示例如下：
+    采用 Kerberos 认证方式，需要 [krb5.conf (opens new window)](https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html) 文件，krb5.conf 文件包含 Kerberos 的配置信息，通常，应该将 krb5.conf 文件安装在目录/etc 中。可以通过设置环境变量 KRB5_CONFIG 覆盖默认位置。krb5.conf 文件的内容示例如下：
 
-```Plain
-[libdefaults]
-    default_realm = DORIS.HADOOP
-    default_tkt_enctypes = des3-hmac-sha1 des-cbc-crc
-    default_tgs_enctypes = des3-hmac-sha1 des-cbc-crc
-    dns_lookup_kdc = true
-    dns_lookup_realm = false
+    ```Plain
+    [libdefaults]
+        default_realm = DORIS.HADOOP
+        default_tkt_enctypes = des3-hmac-sha1 des-cbc-crc
+        default_tgs_enctypes = des3-hmac-sha1 des-cbc-crc
+        dns_lookup_kdc = true
+        dns_lookup_realm = false
 
-[realms]
-    DORIS.HADOOP = {
-        kdc = kerberos-doris.hadoop.service:7005
-    }
-```
+    [realms]
+        DORIS.HADOOP = {
+            kdc = kerberos-doris.hadoop.service:7005
+        }
+    ```
 
 ### HDFS HA 模式
 
@@ -481,102 +483,99 @@ Broker Name 只是一个用户自定义名称，不代表 Broker 的类型。
 
 ## 导入示例
 
-### 导入 HDFS 上的 TXT 文件
+#### 导入 HDFS 上的 TXT 文件
 
-  ```sql
-  LOAD LABEL demo.label_20220402
-  (
-      DATA INFILE("hdfs://host:port/tmp/test_hdfs.txt")
-      INTO TABLE `load_hdfs_file_test`
-      COLUMNS TERMINATED BY "\t"            
-      (id,age,name)
-  ) 
-  with HDFS
-  (
-    "fs.defaultFS"="hdfs://host:port",
-    "hadoop.username" = "user"
-  )
-  PROPERTIES
-  (
-      "timeout"="1200",
-      "max_filter_ratio"="0.1"
-  );
-  ```
+```sql
+LOAD LABEL demo.label_20220402
+(
+    DATA INFILE("hdfs://host:port/tmp/test_hdfs.txt")
+    INTO TABLE `load_hdfs_file_test`
+    COLUMNS TERMINATED BY "\t"            
+    (id,age,name)
+) 
+with HDFS
+(
+  "fs.defaultFS"="hdfs://host:port",
+  "hadoop.username" = "user"
+)
+PROPERTIES
+(
+    "timeout"="1200",
+    "max_filter_ratio"="0.1"
+);
+```
 
-###  HDFS 需要配置 NameNode HA 的情况
+####  HDFS 需要配置 NameNode HA 的情况
 
-  ```sql
-  LOAD LABEL demo.label_20220402
-  (
-      DATA INFILE("hdfs://hafs/tmp/test_hdfs.txt")
-      INTO TABLE `load_hdfs_file_test`
-      COLUMNS TERMINATED BY "\t"            
-      (id,age,name)
-  ) 
-  with HDFS
-  (
-      "hadoop.username" = "user",
-      "fs.defaultFS"="hdfs://hafs"，
-      "dfs.nameservices" = "hafs",
-      "dfs.ha.namenodes.hafs" = "my_namenode1, my_namenode2",
-      "dfs.namenode.rpc-address.hafs.my_namenode1" = "nn1_host:rpc_port",
-      "dfs.namenode.rpc-address.hafs.my_namenode2" = "nn2_host:rpc_port",
-      "dfs.client.failover.proxy.provider.hafs" = "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider"
-  )
-  PROPERTIES
-  (
-      "timeout"="1200",
-      "max_filter_ratio"="0.1"
-  );
-  ```
+```sql
+LOAD LABEL demo.label_20220402
+(
+    DATA INFILE("hdfs://hafs/tmp/test_hdfs.txt")
+    INTO TABLE `load_hdfs_file_test`
+    COLUMNS TERMINATED BY "\t"            
+    (id,age,name)
+) 
+with HDFS
+(
+    "hadoop.username" = "user",
+    "fs.defaultFS"="hdfs://hafs"，
+    "dfs.nameservices" = "hafs",
+    "dfs.ha.namenodes.hafs" = "my_namenode1, my_namenode2",
+    "dfs.namenode.rpc-address.hafs.my_namenode1" = "nn1_host:rpc_port",
+    "dfs.namenode.rpc-address.hafs.my_namenode2" = "nn2_host:rpc_port",
+    "dfs.client.failover.proxy.provider.hafs" = "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider"
+)
+PROPERTIES
+(
+    "timeout"="1200",
+    "max_filter_ratio"="0.1"
+);
+```
+#### 从 HDFS 导入数据，使用通配符匹配两批文件，分别导入到两个表中
 
-### 从 HDFS 导入数据，使用通配符匹配两批文件，分别导入到两个表中
+```sql
+LOAD LABEL example_db.label2
+(
+    DATA INFILE("hdfs://host:port/input/file-10*")
+    INTO TABLE `my_table1`
+    PARTITION (p1)
+    COLUMNS TERMINATED BY ","
+    (k1, tmp_k2, tmp_k3)
+    SET (
+        k2 = tmp_k2 + 1,
+        k3 = tmp_k3 + 1
+    ),
+    DATA INFILE("hdfs://host:port/input/file-20*")
+    INTO TABLE `my_table2`
+    COLUMNS TERMINATED BY ","
+    (k1, k2, k3)
+)
+with HDFS
+(
+  "fs.defaultFS"="hdfs://host:port",
+  "hadoop.username" = "user"
+);
+```
 
-  ```sql
-  LOAD LABEL example_db.label2
-  (
-      DATA INFILE("hdfs://host:port/input/file-10*")
-      INTO TABLE `my_table1`
-      PARTITION (p1)
-      COLUMNS TERMINATED BY ","
-      (k1, tmp_k2, tmp_k3)
-      SET (
-          k2 = tmp_k2 + 1,
-          k3 = tmp_k3 + 1
-      ),
-      DATA INFILE("hdfs://host:port/input/file-20*")
-      INTO TABLE `my_table2`
-      COLUMNS TERMINATED BY ","
-      (k1, k2, k3)
-  )
-  with HDFS
-  (
-    "fs.defaultFS"="hdfs://host:port",
-    "hadoop.username" = "user"
-  );
-  ```
+使用通配符匹配导入两批文件 `file-10*` 和 `file-20*`。分别导入到 `my_table1` 和 `my_table2` 两张表中。其中 `my_table1` 指定导入到分区 `p1` 中，并且将导入源文件中第二列和第三列的值 +1 后导入。
 
-  使用通配符匹配导入两批文件 `file-10*` 和 `file-20*`。分别导入到 `my_table1` 和 `my_table2` 两张表中。其中 `my_table1` 指定导入到分区 `p1` 中，并且将导入源文件中第二列和第三列的值 +1 后导入。
+#### 使用通配符从 HDFS 导入一批数据
+```sql
+LOAD LABEL example_db.label3
+(
+    DATA INFILE("hdfs://host:port/user/doris/data/*/*")
+    INTO TABLE `my_table`
+    COLUMNS TERMINATED BY "\\x01"
+)
+with HDFS
+(
+  "fs.defaultFS"="hdfs://host:port",
+  "hadoop.username" = "user"
+);
+```
+指定分隔符为 Hive 经常用的默认分隔符 `\\x01`，并使用通配符 * 指定 `data` 目录下所有目录的所有文件。
 
-### 使用通配符从 HDFS 导入一批数据
-
-  ```sql
-  LOAD LABEL example_db.label3
-  (
-      DATA INFILE("hdfs://host:port/user/doris/data/*/*")
-      INTO TABLE `my_table`
-      COLUMNS TERMINATED BY "\\x01"
-  )
-  with HDFS
-  (
-    "fs.defaultFS"="hdfs://host:port",
-    "hadoop.username" = "user"
-  );
-  ```
-
-  指定分隔符为 Hive 经常用的默认分隔符 `\\x01`，并使用通配符 * 指定 `data` 目录下所有目录的所有文件。
-
-### 导入 Parquet 格式数据，指定 FORMAT 为 `parquet`
+#### 导入 Parquet 格式数据，指定 FORMAT 为 `parquet`
 
     ```SQL
     LOAD LABEL example_db.label4
@@ -595,7 +594,7 @@ Broker Name 只是一个用户自定义名称，不代表 Broker 的类型。
 
   默认是通过文件后缀判断。
 
-### 导入数据，并提取文件路径中的分区字段
+#### 导入数据，并提取文件路径中的分区字段
 
   ```sql
   LOAD LABEL example_db.label5
@@ -626,7 +625,7 @@ Broker Name 只是一个用户自定义名称，不代表 Broker 的类型。
 
   文件中只包含 `k1, k2, k3` 三列数据，`city, utc_date` 这两列数据会从文件路径中提取。
 
-### 对导入数据进行过滤
+#### 对导入数据进行过滤
 
   ```sql
   LOAD LABEL example_db.label6
@@ -649,7 +648,7 @@ Broker Name 只是一个用户自定义名称，不代表 Broker 的类型。
 
   只有原始数据中，k1 = 1，并且转换后，k1 > k2 的行才会被导入。
 
-### 导入数据，提取文件路径中的时间分区字段
+#### 导入数据，提取文件路径中的时间分区字段
 
   ```sql
   LOAD LABEL example_db.label7
@@ -694,7 +693,7 @@ Broker Name 只是一个用户自定义名称，不代表 Broker 的类型。
   );
   ```
 
-### 使用 Merge 方式导入
+#### 使用 Merge 方式导入
 
   ```sql
   LOAD LABEL example_db.label8
@@ -718,7 +717,7 @@ Broker Name 只是一个用户自定义名称，不代表 Broker 的类型。
 
   使用 Merge 方式导入。`my_table` 必须是一张 Unique Key 的表。当导入数据中的 v2 列的值大于 100 时，该行会被认为是一个删除行。导入任务的超时时间是 3600 秒，并且允许错误率在 10% 以内。
 
-### 导入时指定 source_sequence 列，保证替换顺序
+#### 导入时指定 source_sequence 列，保证替换顺序
 
   ```sql
   LOAD LABEL example_db.label9
@@ -780,7 +779,7 @@ Broker Name 只是一个用户自定义名称，不代表 Broker 的类型。
   );
   ```
 
-### 从其他 Broker 导入
+#### 从其他 Broker 导入
 
 - 阿里云 OSS
 

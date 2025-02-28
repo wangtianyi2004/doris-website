@@ -783,59 +783,59 @@ with HDFS
 
 - 阿里云 OSS
 
-```sql
-(
-    "fs.oss.accessKeyId" = "",
-    "fs.oss.accessKeySecret" = "",
-    "fs.oss.endpoint" = ""
-)
-```
+    ```sql
+    (
+        "fs.oss.accessKeyId" = "",
+        "fs.oss.accessKeySecret" = "",
+        "fs.oss.endpoint" = ""
+    )
+    ```
 
 - 百度云 BOS
 
-当前使用 BOS 时需要下载相应的 SDK 包，具体配置与使用，可以参考 [BOS HDFS 官方文档](https://cloud.baidu.com/doc/BOS/s/fk53rav99)。在下载完成并解压后将 jar 包放到 broker 的 lib 目录下。
+    当前使用 BOS 时需要下载相应的 SDK 包，具体配置与使用，可以参考 [BOS HDFS 官方文档](https://cloud.baidu.com/doc/BOS/s/fk53rav99)。在下载完成并解压后将 jar 包放到 broker 的 lib 目录下。
 
-```sql
-(
-    "fs.bos.access.key" = "xx",
-    "fs.bos.secret.access.key" = "xx",
-    "fs.bos.endpoint" = "xx"
-)
-```
+    ```sql
+    (
+        "fs.bos.access.key" = "xx",
+        "fs.bos.secret.access.key" = "xx",
+        "fs.bos.endpoint" = "xx"
+    )
+    ```
 
 - 华为云 OBS
 
-```sql
-(
-    "fs.obs.access.key" = "xx",
-    "fs.obs.secret.key" = "xx",
-    "fs.obs.endpoint" = "xx"
-)
-```
+    ```sql
+    (
+        "fs.obs.access.key" = "xx",
+        "fs.obs.secret.key" = "xx",
+        "fs.obs.endpoint" = "xx"
+    )
+    ```
 
 - JuiceFS
 
-```sql
-(
-    "fs.defaultFS" = "jfs://xxx/",
-    "fs.jfs.impl" = "io.juicefs.JuiceFileSystem",
-    "fs.AbstractFileSystem.jfs.impl" = "io.juicefs.JuiceFS",
-    "juicefs.meta" = "xxx",
-    "juicefs.access-log" = "xxx"
-)
-```
+    ```sql
+    (
+        "fs.defaultFS" = "jfs://xxx/",
+        "fs.jfs.impl" = "io.juicefs.JuiceFileSystem",
+        "fs.AbstractFileSystem.jfs.impl" = "io.juicefs.JuiceFS",
+        "juicefs.meta" = "xxx",
+        "juicefs.access-log" = "xxx"
+    )
+    ```
 
 - GCS
 
-在使用 Broker 访问 GCS 时，Project ID 是必须的，其他参数可选，所有参数配置请参考 [GCS Config](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/branch-2.2.x/gcs/CONFIGURATION)
+    在使用 Broker 访问 GCS 时，Project ID 是必须的，其他参数可选，所有参数配置请参考 [GCS Config](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/branch-2.2.x/gcs/CONFIGURATION)
 
-```sql
-(
-    "fs.gs.project.id" = "Your Project ID",
-    "fs.AbstractFileSystem.gs.impl" = "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS",
-    "fs.gs.impl" = "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem",
-)
-```
+    ```sql
+    (
+        "fs.gs.project.id" = "Your Project ID",
+        "fs.AbstractFileSystem.gs.impl" = "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS",
+        "fs.gs.impl" = "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem",
+    )
+    ```
 
 ## 更多帮助
 

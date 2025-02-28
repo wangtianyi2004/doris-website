@@ -101,12 +101,6 @@ PROPERTIES
 
 ```sql
 SELECT * FROM test_s3load;
-```
-
-Results:
-
-```
-mysql> select * from test_s3load;
 +---------+-----------+------+
 | user_id | name      | age  |
 +---------+-----------+------+
@@ -189,12 +183,6 @@ SELECT * FROM S3
 
 ```sql
 SELECT * FROM test_s3load;
-```
-
-Results:
-
-```
-mysql> select * from test_s3load;
 +---------+-----------+------+
 | user_id | name      | age  |
 +---------+-----------+------+

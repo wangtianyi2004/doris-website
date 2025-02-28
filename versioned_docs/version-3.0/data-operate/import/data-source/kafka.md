@@ -28,11 +28,11 @@ Doris provides the following methods to load data from Kafka:
 
 - **Using Routine Load to consume Kafka data**
 
-Doris continuously consumes data from Kafka Topics through Routine Load. After submitting a Routine Load job, Doris generates load tasks in real-time to consume messages from the specified Topic in the Kafka cluster. Routine Load supports CSV and JSON formats, with Exactly-Once semantics, ensuring that data is neither lost nor duplicated. For more documentation, please refer to [Routine Load](../import-way/routine-load-manual.md).
+  Doris continuously consumes data from Kafka Topics through Routine Load. After submitting a Routine Load job, Doris generates load tasks in real-time to consume messages from the specified Topic in the Kafka cluster. Routine Load supports CSV and JSON formats, with Exactly-Once semantics, ensuring that data is neither lost nor duplicated. For more documentation, please refer to [Routine Load](../import-way/routine-load-manual.md).
 
 - **Doris Kafka Connector to consume Kafka data**
 
-The Doris Kafka Connector is a tool for loading Kafka data streams into the Doris database. Users can easily load various serialization formats (such as JSON, Avro, Protobuf) through the Kafka Connect plugin, and it supports parsing data formats from the Debezium component. For more documentation, please refer to [Doris Kafka Connector](../../../ecosystem/doris-kafka-connector.md).
+  The Doris Kafka Connector is a tool for loading Kafka data streams into the Doris database. Users can easily load various serialization formats (such as JSON, Avro, Protobuf) through the Kafka Connect plugin, and it supports parsing data formats from the Debezium component. For more documentation, please refer to [Doris Kafka Connector](../../../ecosystem/doris-kafka-connector.md).
 
 In most cases, you can directly choose Routine Load for loading data without the need to integrate external components to consume Kafka data. When you need to load data in Avro or Protobuf formats, or data collected from upstream databases via Debezium, you can use the Doris Kafka Connector.
 
@@ -41,6 +41,7 @@ In most cases, you can directly choose Routine Load for loading data without the
 ### Usage Restrictions
 
 1. Supported message formats are CSV and JSON. Each CSV message is one line, and the line does not contain a newline character at the end;
+
 2. By default, it supports Kafka version 0.10.0.0 and above. If you need to use older versions (such as 0.9.0, 0.8.2, 0.8.1, 0.8.0), you need to modify the BE configuration to set `kafka_broker_version_fallback` to a compatible older version, or set `property.broker.version.fallback` when creating the Routine Load. Using older versions may result in some new features being unavailable, such as setting Kafka partition offsets based on time.
 
 ### Operation Example
@@ -207,7 +208,7 @@ max.poll.interval.ms=1800000
 consumer.max.poll.interval.ms=1800000
 ```
 
-3. Start:
+3. Start Kafka Connect:
 
 ```Bash
 $KAFKA_HOME/bin/connect-distributed.sh -daemon $KAFKA_HOME/config/connect-distributed.properties
@@ -236,23 +237,6 @@ curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X 
   }
 }'
 ```
-
-**Operate Kafka Connect**
-
-```Bash
-# View connector status
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/status -X GET
-# Delete current connector
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster -X DELETE
-# Pause current connector
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/pause -X PUT
-# Resume current connector
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/resume -X PUT
-# Restart tasks within the connector
-curl -i http://127.0.0.1:8083/connectors/test-doris-sink-cluster/tasks/0/restart -X POST
-```
-
-For an introduction to Distributed mode, please refer to [Distributed Workers](https://docs.confluent.io/platform/current/connect/index.html#distributed-workers).
 
 ### Load Ordinary Data
 
@@ -319,61 +303,61 @@ curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X 
 
 1. The MySQL database has the following table:
 
-```SQL
-CREATE TABLE test.test_user (
-  user_id int NOT NULL ,
-  name varchar(20),
-  age int,
-  PRIMARY KEY (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ```SQL
+    CREATE TABLE test.test_user (
+      user_id int NOT NULL ,
+      name varchar(20),
+      age int,
+      PRIMARY KEY (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-insert into test.test_user values(1,'zhangsan',20);
-insert into test.test_user values(2,'lisi',21);
-insert into test.test_user values(3,'wangwu',22);
-```
+    insert into test.test_user values(1,'zhangsan',20);
+    insert into test.test_user values(2,'lisi',21);
+    insert into test.test_user values(3,'wangwu',22);
+    ```
 
 2. Create the table to be loaded in Doris:
 
-```SQL
-CREATE TABLE test_db.test_user(
-    user_id            BIGINT       NOT NULL COMMENT "user id",
-    name               VARCHAR(20)           COMMENT "name",
-    age                INT                   COMMENT "age"
-)
-UNIQUE KEY(user_id)
-DISTRIBUTED BY HASH(user_id) BUCKETS 12;
-```
+    ```SQL
+    CREATE TABLE test_db.test_user(
+        user_id            BIGINT       NOT NULL COMMENT "user id",
+        name               VARCHAR(20)           COMMENT "name",
+        age                INT                   COMMENT "age"
+    )
+    UNIQUE KEY(user_id)
+    DISTRIBUTED BY HASH(user_id) BUCKETS 12;
+    ```
 
 3. Deploy the Debezium connector for MySQL component, refer to: [Debezium connector for MySQL](https://debezium.io/documentation/reference/stable/connectors/mysql.html).
 
 4. Create the doris-kafka-connector load task:
 
-Assuming the data from the MySQL table collected by Debezium is in the `mysql_debezium.test.test_user` Topic:
+    Assuming the data from the MySQL table collected by Debezium is in the `mysql_debezium.test.test_user` Topic: 
 
-```Bash
-curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
-  "name":"test-debezium-doris-sink",
-  "config":{
-    "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
-    "tasks.max":"10",
-    "topics":"mysql_debezium.test.test_user",
-    "doris.topic2table.map": "mysql_debezium.test.test_user:test_user",
-    "buffer.count.records":"10000",
-    "buffer.flush.time":"120",
-    "buffer.size.bytes":"5000000",
-    "doris.urls":"10.10.10.1",
-    "doris.user":"root",
-    "doris.password":"",
-    "doris.http.port":"8030",
-    "doris.query.port":"9030",
-    "doris.database":"test_db",
-    "converter.mode":"debezium_ingestion",
-    "enable.delete":"true",
-    "key.converter":"org.apache.kafka.connect.json.JsonConverter",
-    "value.converter":"org.apache.kafka.connect.json.JsonConverter"
-  }
-}'
-```
+    ```Bash
+    curl -i http://127.0.0.1:8083/connectors -H "Content-Type: application/json" -X POST -d '{
+      "name":"test-debezium-doris-sink",
+      "config":{
+        "connector.class":"org.apache.doris.kafka.connector.DorisSinkConnector",
+        "tasks.max":"10",
+        "topics":"mysql_debezium.test.test_user",
+        "doris.topic2table.map": "mysql_debezium.test.test_user:test_user",
+        "buffer.count.records":"10000",
+        "buffer.flush.time":"120",
+        "buffer.size.bytes":"5000000",
+        "doris.urls":"10.10.10.1",
+        "doris.user":"root",
+        "doris.password":"",
+        "doris.http.port":"8030",
+        "doris.query.port":"9030",
+        "doris.database":"test_db",
+        "converter.mode":"debezium_ingestion",
+        "enable.delete":"true",
+        "key.converter":"org.apache.kafka.connect.json.JsonConverter",
+        "value.converter":"org.apache.kafka.connect.json.JsonConverter"
+      }
+    }'
+    ```
 
 ### Load Data in AVRO Serialization Format
 

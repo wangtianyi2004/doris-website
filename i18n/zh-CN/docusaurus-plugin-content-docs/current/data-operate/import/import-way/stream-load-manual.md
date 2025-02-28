@@ -73,7 +73,7 @@ Stream Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
 
 **导入 CSV 数据**
 
-1. 创建导入数据
+1. **创建导入数据**
 
     创建 CSV 文件 streamload_example.csv 文件。具体内容如下
 
@@ -90,7 +90,7 @@ Stream Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
     10,Liam,64
     ```
 
-2. 创建导入 Doris 表
+2. **创建导入 Doris 表**
 
     在 Doris 中创建被导入的表，具体语法如下
 
@@ -104,7 +104,7 @@ Stream Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
     DISTRIBUTED BY HASH(user_id) BUCKETS 10;
     ```
 
-3. 启用导入作业
+3. **启用导入作业**
 
     通过 `curl` 命令可以提交 Stream Load 导入作业。
 
@@ -141,7 +141,7 @@ Stream Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
     }
     ```
 
-4. 查看导入数据
+4. **查看导入数据**
 
     ```sql
     mysql> select count(*) from testdb.test_streamload;
@@ -154,7 +154,7 @@ Stream Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
 
 **导入 JSON 数据**
 
-1. 创建导入数据
+1. **创建导入数据**
 
     创建 JSON 文件 streamload_example.json。具体内容如下
 
@@ -173,7 +173,7 @@ Stream Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
     ]
     ```
 
-2. 创建导入 Doris 表
+2. **创建导入 Doris 表**
 
     在 Doris 中创建被导入的表，具体语法如下
 
@@ -187,7 +187,7 @@ Stream Load 需要对目标表的 INSERT 权限。如果没有 INSERT 权限，�
     DISTRIBUTED BY HASH(user_id) BUCKETS 10;
     ```
 
-3. 启用导入作业
+3. **启用导入作业**
 
     通过 `curl` 命令可以提交 Stream Load 导入作业。
 
@@ -383,7 +383,7 @@ Stream Load 是一种同步的导入方式，导入结果会通过创建导入�
 
 ## 导入举例
 
-### 设置导入超时时间与最大导入
+#### 设置导入超时时间与最大导入
 
 导入任务的超时时间（以秒为单位），导入任务在设定的 timeout 时间内未完成则会被系统取消，变成 CANCELLED。通过指定参数 timeout 或者在 fe.conf 中添加参数 stream_load_default_timeout_second，可以调整 Stream Load 的导入超时时间。
 
@@ -405,7 +405,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 设置导入最大容错率
+#### 设置导入最大容错率
 
 Doris 的导入任务可以容忍一部分格式错误的数据。容忍率通过 `max_filter_ratio` 设置。默认为 0，即表示当有一条错误数据时，整个导入任务将会失败。如果用户希望忽略部分有问题的数据行，可以将次参数设置为 0~1 之间的数值，Doris 会自动跳过哪些数据格式不正确的行。关于容忍率的一些计算方式，可以参阅 [数据转换](../../../data-operate/import/load-data-convert) 文档。
 
@@ -421,7 +421,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 设置导入过滤条件
+#### 设置导入过滤条件
 
 导入过程中可以通过 WHERE 参数对导入的数据进行条件过滤。被过滤的数据不会参与到 filter ratio 的计算中，不影响 max_filter_ratio 的设置。在导入结束后，可以通过查看 num_rows_unselected 获取过滤的行数。
 
@@ -437,7 +437,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 导入指定分区数据
+#### 导入指定分区数据
 
 将本地文件中的数据导入到表中的 p1, p2 分区，允许 20% 的错误率。
 
@@ -453,7 +453,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 指定导入时区 
+#### 指定导入时区 
 
 由于 Doris 目前没有内置时区的时间类型，所有 `DATETIME` 相关类型均只表示绝对的时间点，而不包含时区信息，不因 Doris 系统时区变化而发生变化。因此，对于带时区数据的导入，我们统一的处理方式为将其转换为特定目标时区下的数据。在 Doris 系统中，即 session variable `time_zone` 所代表的时区。
 
@@ -463,7 +463,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
 
 更多关于时区解读可参考文档 [时区](../../../admin-manual/cluster-management/time-zone)。
 
-### 使用 Streaming 方式导入
+#### 使用 Streaming 方式导入
 
 Stream Load 是基于 HTTP 的协议进行导入，所以是支持使用程序，比如 Java、Go 或者 Python 等程序来流式写入，这也是为什么起名叫 Stream Load 的原因。
 
@@ -473,7 +473,7 @@ Stream Load 是基于 HTTP 的协议进行导入，所以是支持使用程序�
 seq 1 10 | awk '{OFS="\t"}{print $1, $1 * 10}' | curl --location-trusted -u root -T - http://host:port/api/testDb/testTbl/_stream_load
 ```
 
-### 设置 CSV 首行过滤导入
+#### 设置 CSV 首行过滤导入
 
 文件数据：
 
@@ -489,7 +489,7 @@ seq 1 10 | awk '{OFS="\t"}{print $1, $1 * 10}' | curl --location-trusted -u root
 curl --location-trusted -u root -T test.csv  -H "label:1" -H "format:csv_with_names" -H "column_separator:," http://host:port/api/testDb/testTbl/_stream_load
 ```
 
-### 指定 merge_type 进行 Delete 操作
+#### 指定 merge_type 进行 Delete 操作
 
 在 Stream Load 中有三种导入类型：APPEND、DELETE 与 MERGE。可以通过指定参数 merge_type 进行调整。如想指定将与导入数据 Key 相同的数据全部删除，可以使用以下命令：
 
@@ -532,7 +532,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
 +--------+----------+----------+------+
 ```
 
-### 指定 merge_type 进行 Merge 操作
+#### 指定 merge_type 进行 Merge 操作
 
 指定 merge_type 为 MERGE，可以将导入的数据 MERGE 到表中。MERGE 语义需要结合 DELETE 条件联合使用，表示满足 DELETE 条件的数据按照 DELETE 语义处理，其余按照 APPEND 语义添加到表中，如下面操作表示删除 siteid 为 1 的行，其余数据添加到表中：
 
@@ -580,7 +580,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
 +--------+----------+----------+------+
 ```
 
-### 指定导入需要 Merge 的 Sequence 列
+#### 指定导入需要 Merge 的 Sequence 列
 
 当 Unique Key 表设置了 Sequence 列时，在相同 Key 列下，Sequence 列的值会作为 REPLACE 聚合函数替换顺序的依据，较大值可以替换较小值。当对这种表基于 `DORIS_DELETE_SIGN` 进行删除标记时，需要保证 Key 相同和 Sequence 列值要大于等于当前值。通指定 function_column.sequence_col 参数可以结合 merge_type: DELETE 进行删除操作：
 
@@ -667,7 +667,7 @@ li,male,9
 
 并没有被删除，这是因为在底层的依赖关系上，会先判断 Key 相同的情况，对外展示 Sequence 列的值大的行数据，然后在看该行的 `DORIS_DELETE_SIGN` 值是否为 1，如果为 1 则不会对外展示，如果为 0，则仍会读出来。
 
-### 导入包含包围符的数据
+#### 导入包含包围符的数据
 
 当 CSV 中的数据包含了分隔符或者分列符，为了防止截断，可以指定单字节字符作为包围符起到保护的作用。
 
@@ -708,7 +708,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 导入包含 DEFAULT CURRENT_TIMESTAMP 类型的字段
+#### 导入包含 DEFAULT CURRENT_TIMESTAMP 类型的字段
 
 下面给出导入数据到表字段含有 DEFAULT CURRENT_TIMESTAMP 的表中的例子：
 
@@ -736,7 +736,7 @@ JSON 数据格式：
 curl --location-trusted -u root -T test.json -H "label:1" -H "format:json" -H 'columns: id, order_code, create_time=CURRENT_TIMESTAMP()' http://host:port/api/testDb/testTbl/_stream_load
 ```
 
-### 简单模式导入 JSON 格式数据
+#### 简单模式导入 JSON 格式数据
 
 在 JSON 字段和表中的列名一一对应时，可以通过指定参数 `"strip_outer_array:true"` 与 `"format:json"` 将 JSON 数据格式导入到表中。
 
@@ -780,7 +780,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 匹配模式导入复杂的 JSON 格式数据
+#### 匹配模式导入复杂的 JSON 格式数据
 
 在 JSON 数据较为复杂，无法与表中的列名一一对应，或者有多余的列时，可以通过指定参数 jsonpaths 完成列名映射，进行数据匹配导入。如下列数据：
 
@@ -812,7 +812,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 指定 JSON 根节点导入数据
+#### 指定 JSON 根节点导入数据
 
 如果 JSON 数据包含了嵌套 JSON 字段，需要指定导入 JSON 的根节点。默认值为“”。
 
@@ -847,7 +847,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 导入 Array 数据类型
+#### 导入 Array 数据类型
 
 如下列数据中包含了数组类型：
 
@@ -887,7 +887,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 导入 map 数据类型
+#### 导入 map 数据类型
 
 当导入数据中包含 map 类型，如以下的例子中：
 
@@ -928,7 +928,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 导入 Bitmap 类型数据
+#### 导入 Bitmap 类型数据
 
 在导入过程中，遇到 Bitmap 类型的数据，可以通过 to_bitmap 将数据转换成 Bitmap，或者通过 bitmap_empty 函数填充 Bitmap。
 
@@ -969,7 +969,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 导入 HLL 数据类型
+#### 导入 HLL 数据类型
 
 通过 hll_hash 函数可以将数据转换成 hll 类型，如下数据：
 
@@ -1008,15 +1008,15 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### 列映射、衍生列和过滤
+#### 列映射、衍生列和过滤
 
 Doris 可以在导入语句中支持非常丰富的列转换和过滤操作。支持绝大多数内置函数。关于如何正确的使用这个功能，可参阅 [数据转换](../../../data-operate/import/load-data-convert) 文档。
 
-### 启用严格模式导入
+#### 启用严格模式导入
 
 `strict_mode` 属性用于设置导入任务是否运行在严格模式下。该属性会对列映射、转换和过滤的结果产生影响，它同时也将控制部分列更新的行为。关于严格模式的具体说明，可参阅 [严格模式](../handling-messy-data#严格模式) 文档。
 
-### 导入时进行部分列更新/灵活部分列更新
+#### 导入时进行部分列更新/灵活部分列更新
 
 关于导入时，如何表达部分列更新，可以参考 [数据更新/主键模型的导入更新](../../../data-operate/update/update-of-unique-model) 文档
 

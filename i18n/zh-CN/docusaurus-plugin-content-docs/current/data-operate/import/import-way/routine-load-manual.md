@@ -491,7 +491,7 @@ ReasonOfStateChanged:
 
 ## 导入示例
 
-### 设置导入最大容错率
+#### 设置导入最大容错率
 
 1. 导入数据样例
 
@@ -545,7 +545,7 @@ ReasonOfStateChanged:
     2 rows in set (0.01 sec)
     ```
 
-### 从指定消费点消费数据
+#### 从指定消费点消费数据
 
 1. 导入数据样例
 
@@ -598,7 +598,7 @@ ReasonOfStateChanged:
     3 rows in set (0.01 sec)
     ```
 
-### 指定 Consumer Group 的 group.id 与 client.id
+#### 指定 Consumer Group 的 group.id 与 client.id
 
 1. 导入数据样例
 
@@ -649,7 +649,7 @@ ReasonOfStateChanged:
     3 rows in set (0.01 sec)
     ```
 
-### 设置导入过滤条件
+#### 设置导入过滤条件
 
 1. 导入数据样例
 
@@ -702,7 +702,7 @@ ReasonOfStateChanged:
     3 rows in set (0.01 sec)
     ```
 
-### 导入指定分区数据
+#### 导入指定分区数据
 
 1. 导入数据样例
 
@@ -755,7 +755,7 @@ ReasonOfStateChanged:
     1 rows in set (0.01 sec)
     ```
 
-### 设置导入时区
+#### 设置导入时区
 
 1. 导入数据样例
 
@@ -808,7 +808,7 @@ ReasonOfStateChanged:
     +------+-------------+------+---------------------+
     3 rows in set (0.00 sec)
     ```
-### 设置 merge_type
+#### 设置 merge_type
 
 **指定 merge_type 进行 delete 操作**
 
@@ -997,22 +997,20 @@ mysql> SELECT * FROM routine_test08;
 
     ```sql
     CREATE ROUTINE LOAD demo.kafka_job09 ON routine_test09
-            WITH MERGE 
-            COLUMNS TERMINATED BY ",",
-            COLUMNS(id, name, age),
-            DELETE ON id = 2,
-            ORDER BY age
-            PROPERTIES
-            (
-                "desired_concurrent_number"="1",
-                "strict_mode" = "false"
-            )
-            FROM KAFKA
-            (
-                "kafka_broker_list" = "10.16.10.6:9092",
-                "kafka_topic" = "routineLoad09",
-                "property.kafka_default_offsets" = "OFFSET_BEGINNING"
-            );   
+    WITH MERGE 
+    COLUMNS TERMINATED BY ",",
+    COLUMNS(id, name, age),
+    DELETE ON id = 2,
+    ORDER BY age
+    PROPERTIES (
+        "desired_concurrent_number"="1",
+        "strict_mode" = "false"
+    )
+    FROM KAFKA (
+        "kafka_broker_list" = "10.16.10.6:9092",
+        "kafka_topic" = "routineLoad09",
+        "property.kafka_default_offsets" = "OFFSET_BEGINNING"
+    );   
     ```
 
 4. 导入结果
@@ -1058,14 +1056,13 @@ mysql> SELECT * FROM routine_test08;
 
     ```sql
     CREATE ROUTINE LOAD demo.kafka_job10 ON routine_test10
-            COLUMNS TERMINATED BY ",",
-            COLUMNS(id, name, age, num=age*10)
-            FROM KAFKA
-            (
-                "kafka_broker_list" = "10.16.10.6:9092",
-                "kafka_topic" = "routineLoad10",
-                "property.kafka_default_offsets" = "OFFSET_BEGINNING"
-            );  
+    COLUMNS TERMINATED BY ",",
+    COLUMNS(id, name, age, num=age*10)
+    FROM KAFKA (
+        "kafka_broker_list" = "10.16.10.6:9092",
+        "kafka_topic" = "routineLoad10",
+        "property.kafka_default_offsets" = "OFFSET_BEGINNING"
+    );  
     ```
 
 4. 导入结果
@@ -1353,7 +1350,7 @@ mysql> SELECT * FROM routine_test08;
     3 rows in set (0.01 sec)
     ```
 
-### 导入复杂类型
+#### 导入复杂类型
 
 **导入 Array 数据类型**
 
@@ -1592,7 +1589,7 @@ mysql> SELECT * FROM routine_test08;
     1 row in set (0.01 sec)
     ```
 
-### Kafka 安全认证
+#### Kafka 安全认证
 
 **导入 SSL 认证的 Kafka 数据**
 
@@ -1686,7 +1683,7 @@ CREATE ROUTINE LOAD demo.kafka_job22 ON routine_test22
 | property.sasl.username     | SASL 的用户名                                       |
 | property.sasl.password     | SASL 的密码                                         |
 
-### 一流多表导入
+#### 一流多表导入
 
 为 example_db 创建一个名为 test1 的 Kafka 例行动态多表导入任务。指定列分隔符和 group.id 和 client.id，并且自动默认消费所有分区，且从有数据的位置（OFFSET_BEGINNING）开始订阅。
 
@@ -1704,7 +1701,7 @@ FROM KAFKA
 
 这个时候需要 Kafka 中的数据包含表名的信息。目前仅支持从 Kafka 的 Value 中获取动态表名，且需要符合这种格式：以 JSON 为例：`table_name|{"col1": "val1", "col2": "val2"}`, 其中 `tbl_name` 为表名，以 `|` 作为表名和表数据的分隔符。CSV 格式的数据也是类似的，如：`table_name|val1,val2,val3`。注意，这里的 `table_name` 必须和 Doris 中的表名一致，否则会导致导入失败。注意，动态表不支持后面介绍的 column_mapping 配置。
 
-### 严格模式导入
+#### 严格模式导入
 
 为 example_db 的 example_tbl 创建一个名为 test1 的 Kafka 例行导入任务。导入任务为严格模式。
 

@@ -270,26 +270,14 @@ Stream Load operation supports both HTTP chunked and non-chunked import methods.
 
 ### Load configuration parameters
 
-#### FE configuration
+**Configuration**
+| **Parameter Name**                   | **Component** | **Default Value**  | **Dynamic Configuration** | **Description**                                                                                                  |
+|--------------------------------------|---------------|--------------------|---------------------------|------------------------------------------------------------------------------------------------------------------|
+| `stream_load_default_timeout_second` | FE            | 259200 (s)         | Yes                       | The default timeout for Stream Load. If the load job isn't completed within this time, it will be canceled. The timeout can be set individually in the Stream Load request or globally on the FE. |
+| `streaming_load_max_mb`             | BE            | 10240 (MB)         | Yes                       | The maximum import size for Stream Load. If the file exceeds this value, adjust the `streaming_load_max_mb` parameter on the BE. |
 
-1. `stream_load_default_timeout_second`
 
-   - Default Value: 259200 (s)
-
-   - Dynamic Configuration: Yes
-   - FE Master-only Configuration: Yes
-
-Parameter Description: The default timeout for Stream Load. The load job will be canceled by the system if it is not completed within the set timeout (in seconds). If the source file cannot be imported within the specified time, the user can set an individual timeout in the Stream Load request. Alternatively, adjust the `stream_load_default_timeout_second` parameter on the FE to set the global default timeout.
-
-#### BE configuration
-
-1. `streaming_load_max_mb`
-
-   - Default value: 10240 (MB)
-   - Dynamic configuration: Yes
-   - Parameter description: The maximum import size for Stream Load. If the user's original file exceeds this value, the `streaming_load_max_mb` parameter on the BE needs to be adjusted.
-
-2. Header parameters
+**Header parameters**
 
    Load parameters can be passed through the HTTP Header section. See below for specific parameter descriptions.
 
@@ -360,7 +348,7 @@ The return result parameters are explained in the following table:
 | ---------------------- | ------------------------------------------------------------ |
 | TxnId                  | Import transaction ID                                        |
 | Label                  | Label of load job，specified via `-H "label:<label_id>"`.    |
-| Status                 | Final load Status. **Success**:  The load job was successful.**Publish Timeout**: The load job has been completed, but there may be a delay in data visibility. **Label Already Exists**: The label is duplicated, requiring a new label. **Fail**: The load job failed. |
+| Status                 | Final load Status. -**Success**:  The load job was successful.<br>-**Publish Timeout**: The load job has been completed, but there may be a delay in data visibility.<br>-**Label Already Exists**: The label is duplicated, requiring a new label.<br>-**Fail**: The load job failed. |
 | ExistingJobStatus      | The status of the load job corresponding to the already existing label. This field is only displayed when the Status is **Label Already Exists**. Users can use this status to know the status of the import job corresponding to the existing label. **RUNNING** means the job is still executing, and **FINISHED** means the job was successful. |
 | Message                | Error information related to the load job.                   |
 | NumberTotalRows        | The total number of rows processed during the load job.      |
@@ -380,7 +368,7 @@ Users can access the ErrorURL to review data that failed to import due to issues
 
 ## Load example
 
-### Setting load timeout and maximum size
+#### Setting load timeout and maximum size
 
 The timeout for a load job is measured in seconds. If the load job is not completed within the specified timeout period, it will be cancelled by the system and marked as `CANCELLED`. You can adjust the timeout for a Stream Load job by specifying the `timeout` parameter or adding the `stream_load_default_timeout_second` parameter in the fe.conf file.
 
@@ -402,7 +390,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Setting maximum error tolerance rate 
+#### Setting maximum error tolerance rate 
 
 Load job can tolerate a certain amount of data with formatting errors. The tolerance rate is configured using the `max_filter_ratio` parameter. By default, it is set to 0, meaning that if there is even a single erroneous data row, the entire load job will fail. If users wish to ignore some problematic data rows, they can set this parameter to a value between 0 and 1. Doris will automatically skip rows with incorrect data formats. For more information on calculating the tolerance rate, please refer to the [Data Transformation](../../../data-operate/import/load-data-convert) documentation.
 
@@ -418,7 +406,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Setting load filtering conditions
+#### Setting load filtering conditions
 
 During the load job, you can use the WHERE parameter to apply conditional filtering to the imported data. The filtered data will not be included in the calculation of the filter ratio and will not affect the setting of `max_filter_ratio`. After the load job is complete, you can view the number of filtered rows by checking `num_rows_unselected`.
 
@@ -434,7 +422,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Loading data into specific partitions
+#### Loading data into specific partitions
 
 Loading data from local files into partitions p1 and p2 of the table, allowing a 20% error rate.
 
@@ -450,7 +438,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Loading data into specific timezone
+#### Loading data into specific timezone
 
 Since Doris currently does not have a built-in time zone time type, all `DATETIME` related types only represent absolute time points, do not contain time zone information, and will not change due to changes in the Doris system time zone. Therefore, for the import of data with time zones, our unified processing method is to convert it into data in a specific target time zone. In the Doris system, it is the time zone represented by the session variable `time_zone`.
 
@@ -460,7 +448,7 @@ For example, the Doris system time zone is "+08:00", and the time column in the 
 
 For more information on time zone interpretation, please refer to the document [Time Zone](../../../admin-manual/cluster-management/time-zone).
 
-### Streamingly import
+#### Streamingly import
 
 Stream Load is based on the HTTP protocol for importing, which supports using programming languages such as Java, Go, or Python for streaming import. This is why it is named Stream Load.
 
@@ -470,7 +458,7 @@ The following example demonstrates this usage through a bash command pipeline. T
 seq 1 10 | awk '{OFS="\t"}{print $1, $1 * 10}' | curl --location-trusted -u root -T - http://host:port/api/testDb/testTbl/_stream_load
 ```
 
-### Set CSV first row filtering 
+#### Set CSV first row filtering 
 
 File data:
 
@@ -486,7 +474,7 @@ Filtering  the first row during load by specifying ` format=csv_with_names`
 curl --location-trusted -u root -T test.csv  -H "label:1" -H "format:csv_with_names" -H "column_separator:," http://host:port/api/testDb/testTbl/_stream_load
 ```
 
-### Specifying merge_type for DELETE operations
+#### Specifying merge_type for DELETE operations
 
 In Stream Load, there are three import types: APPEND, DELETE, and MERGE. These can be adjusted by specifying the parameter `merge_type`. If you want to specify that all data with the same key as the imported data should be deleted, you can use the following command:
 
@@ -529,7 +517,7 @@ After importing, the original table data will be deleted, resulting in the follo
 +--------+----------+----------+------+
 ```
 
-### Specifying merge_type for MERGE operation
+#### Specifying merge_type for MERGE operation
 
 By specifying `merge_type` as MERGE, the imported data can be merged into the table. The MERGE semantics need to be used in combination with the DELETE condition, which means that data satisfying the DELETE condition is processed according to the DELETE semantics, and the rest is added to the table according to the APPEND semantics. The following operation represents deleting the row with `siteid` of 1, and adding the rest of the data to the table:
 
@@ -577,7 +565,7 @@ After loading, the row with `siteid = 1` will be deleted according to the condit
 +--------+----------+----------+------+
 ```
 
-### Specifying sequence column for merge 
+#### Specifying sequence column for merge 
 
 When a table with a Unique Key has a Sequence column, the value of the Sequence column serves as the basis for the replacement order in the REPLACE aggregation function under the same Key column. A larger value can replace a smaller one. When marking deletions based on `DORIS_DELETE_SIGN` for such a table, it is necessary to ensure that the Key is the same and that the Sequence column value is greater than or equal to the current value. By specifying the `function_column.sequence_col` parameter, deletion operations can be performed in combination with `merge_type: DELETE`.
 
@@ -664,7 +652,7 @@ Since `function_column.sequence_col` is specified as `age`, but the `age` value 
 
 It is not deleted because that, at the underlying dependency level, it first checks for rows with the same key. It displays the row data with the larger sequence column value. Then, it checks the `DORIS_DELETE_SIGN` value for that row. If it is 1, it is not displayed externally. If it is 0, it is still read and displayed.
 
-### Loading data with enclosing characters
+#### Loading data with enclosing characters
 
 When the data in a CSV file contains delimiters or separators, single-byte characters can be specified as enclosing characters to protect the data from being truncated.
 
@@ -705,7 +693,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Loading fields containing default CURRENT_TIMESTAMP type
+#### Loading fields containing default CURRENT_TIMESTAMP type
 
 Here's an example of loading data into a table that contains a field with the DEFAULT CURRENT_TIMESTAMP type:
 
@@ -729,7 +717,7 @@ Command:
 curl --location-trusted -u root -T test.json -H "label:1" -H "format:json" -H 'columns: id, order_code, create_time=CURRENT_TIMESTAMP()' http://host:port/api/testDb/testTbl/_stream_load
 ```
 
-### Simple mode for loading JSON format data
+#### Simple mode for loading JSON format data
 
 When the JSON fields correspond one-to-one with the column names in the table, you can import JSON data format into the table by specifying the parameters "strip_outer_array:true" and "format:json".
 
@@ -773,7 +761,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Matching mode for loading complex JSON format data
+#### Matching mode for loading complex JSON format data
 
 When the JSON data is more complex and cannot correspond one-to-one with the column names in the table, or there are extra columns, you can use the jsonpaths parameter to complete the column name mapping and perform data matching import. For example, with the following data:
 
@@ -805,7 +793,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Specifying JSON root node for data load
+#### Specifying JSON root node for data load
 
 If the JSON data contains nested JSON fields, you need to specify the root node of the imported JSON. The default value is "".
 
@@ -840,7 +828,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Loading array data type
+#### Loading array data type
 
 For example, if the following data contains an array type:
 
@@ -880,7 +868,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Loading map data type
+#### Loading map data type
 
 When the imported data contains a map type, as in the following example:
 
@@ -921,7 +909,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Loading bitmap data type
+#### Loading bitmap data type
 
 During the import process, when encountering Bitmap type data, you can use to_bitmap to convert the data into Bitmap, or use the bitmap_empty function to fill the Bitmap.
 
@@ -962,7 +950,7 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Loading HyperLogLog data type
+#### Loading HyperLogLog data type
 
 You can use the hll_hash function to convert data into the hll type, as in the following example:
 
@@ -1001,15 +989,15 @@ curl --location-trusted -u <doris_user>:<doris_password> \
     -XPUT http://<fe_ip>:<fe_http_port>/api/testdb/test_streamload/_stream_load
 ```
 
-### Column mapping, derived columns, and filtering
+#### Column mapping, derived columns, and filtering
 
 Doris supports a very rich set of column transformations and filtering operations in load statements. Supports most built-in functions. For how to use this feature correctly, please refer to the [Data Transformation](../../../data-operate/import/load-data-convert) documentation.
 
-### Enable strict mode import
+#### Enable strict mode import
 
 The strict_mode attribute is used to set whether the import task runs in strict mode. This attribute affects the results of column mapping, transformation, and filtering, and it also controls the behavior of partial column updates. For specific instructions on strict mode, please refer to the [Handling Messy Data](../../../data-operate/import/handling-messy-data) documentation.
 
-### Perform partial column updates/flexible partial update during import
+#### Perform partial column updates/flexible partial update during import
 
 For how to express partial column updates during import, please refer to the Data Manipulation/Data Update documentation.
 

@@ -204,10 +204,10 @@ INSERT INTO 是一个 SQL 语句，其返回结果会根据查询结果的不同
     | -------- | ------------------------------------------------------------ |
     | TxnId    | 导入事务的 ID                                                |
     | Label    | 导入作业的 label，通过 INSERT INTO tbl WITH LABEL label ... 指定 |
-    | Status   | 表示导入数据是否可见。如果可见，显示 `visible`，如果不可见，显示 `committed`<p>- `visible`：表示导入成功，数据可见</p> <p>- `committed`：该状态也表示导入已经完成，只是数据可能会延迟可见，无需重试</p> <p>- Label Already Exists：Label 重复，需要更换 label</p> <p>- Fail：导入失败</p> |
+    | Status   | 导入状态：<p>- `visible`：表示导入成功，数据可见</p> <p>- `committed`：该状态也表示导入已经完成，只是数据可能会延迟可见，无需重试</p> <p>- `Label Already Exists`：Label 重复，需要更换 label</p> <p>- `Fail`：导入失败</p> |
     | Err      | 导入错误信息                                                 |
 
-    当需要查看被过滤的行时，用户可以通过[ SHOW LOAD ](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-LOAD)语句
+    当需要查看被过滤的行时，用户可以通过 [SHOW LOAD](../../../sql-manual/sql-statements/data-modification/load-and-export/SHOW-LOAD)语句
 
     ```sql
     SHOW LOAD WHERE label="xxx";
@@ -238,33 +238,6 @@ INSERT INTO 是一个 SQL 语句，其返回结果会根据查询结果的不同
 
     其中 `ERROR 1064 (HY000): all partitions have no load data` 显示失败原因。后面的 url 可以用于查询错误的数据，具体见后面 查看错误行 小结。
 
-## 导入最佳实践
-
-### 数据量
-
-INSERT INTO 对数据量没有限制，大数据量导入也可以支持。但如果导入数据量过大，就需要通过以下配置修改系统的 INSERT INTO 导入超时时间，确保`导入超时 >= 数据量 ``/`` 预估导入速度`。
-
-1. FE 配置参数`insert_load_default_timeout_second`。
-
-2. 环境变量 `insert_timeout`。
-
-### 查看错误行
-
-当 INSERT INTO 返回结果中提供了 url 字段时，可以通过以下命令查看错误行：
-
-```sql
-SHOW LOAD WARNINGS ON "url";
-```
-
-示例：
-
-```sql
-SHOW LOAD WARNINGS ON "http://ip:port/api/_load_error_log?file=_shard_13/error_loginsert_stmt_d2cac0a0a16d482d-9041c949a4b71605_d2cac0a0a16d482d_9041c949a4b71605";
-```
-
-常见的错误的原因有：源数据列长度超过目的数据列长度、列类型不匹配、分区不匹配、列顺序不匹配等。
-
-可以通过环境变量 `enable_insert_strict`来控制 INSERT INTO 是否忽略错误行。
 
 ## 通过外部表 Multi-Catalog 导入数据
 
@@ -387,6 +360,34 @@ FROM s3(
 - 如果 `S3 / hdfs` TVF 指定的 uri 匹配不到文件，或者匹配到的所有文件都是空文件，那么 `S3 / hdfs` TVF 将会返回空结果集。在这种情况下使用`DESC FUNCTION`查看这个文件的 Schema，会得到一列虚假的列`__dummy_col`，可忽略这一列。
 
 - 如果指定 TVF 的 format 为 CSV `The first line is empty, can not parse column numbers`, 因为无法通过该文件的第一行解析出 Schema。
+
+## 导入最佳实践
+
+### 数据量
+
+INSERT INTO 对数据量没有限制，大数据量导入也可以支持。但如果导入数据量过大，就需要通过以下配置修改系统的 INSERT INTO 导入超时时间，确保`导入超时 >= 数据量 ``/`` 预估导入速度`。
+
+1. FE 配置参数`insert_load_default_timeout_second`。
+
+2. 环境变量 `insert_timeout`。
+
+### 查看错误行
+
+当 INSERT INTO 返回结果中提供了 url 字段时，可以通过以下命令查看错误行：
+
+```sql
+SHOW LOAD WARNINGS ON "url";
+```
+
+示例：
+
+```sql
+SHOW LOAD WARNINGS ON "http://ip:port/api/_load_error_log?file=_shard_13/error_loginsert_stmt_d2cac0a0a16d482d-9041c949a4b71605_d2cac0a0a16d482d_9041c949a4b71605";
+```
+
+常见的错误的原因有：源数据列长度超过目的数据列长度、列类型不匹配、分区不匹配、列顺序不匹配等。
+
+可以通过环境变量 `enable_insert_strict`来控制 INSERT INTO 是否忽略错误行。
 
 ## 更多帮助
 
